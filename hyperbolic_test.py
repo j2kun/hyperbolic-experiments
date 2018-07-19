@@ -23,8 +23,13 @@ def test_invert_in_circle_diagonal():
     assert abs(norm) < 1e-8
 
 
-def test_circle_through_points_normal():
-    pass
+def test_circle_through_points_unit_circle():
+    reference_circle = Circle((0, 0), 1)
+    p1 = (1/2, 1/2)
+    p2 = (1/2, -1/2)
+
+    expected_circle = Circle((3/2, 0), (5/4) ** 0.5)
+    assert expected_circle == circle_through_points_perpendicular_to_circle(p1, p2, reference_circle)
 
 
 def test_circle_through_points_diameter():

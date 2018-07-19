@@ -52,7 +52,7 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
 
     def row(point):
         (x, y) = point
-        return [x ** 2 + y ** 2, x1, y1, 1]
+        return [x ** 2 + y ** 2, x, y, 1]
 
     # The equation for the center of the circle passing through three points
     # is given by the determinants of a cleverly chosen matrix.
@@ -67,6 +67,7 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
         raise Exception("input points {} {} lie on a line with the "
             "center of the circle {}".format(point1, point2, circle))
 
+    # detminor stands for "determinant of (matrix) minor"
     detminor_1_2 = det3(remove_column(M, 1))
     detminor_1_3 = det3(remove_column(M, 2))
     detminor_1_4 = det3(remove_column(M, 3))
@@ -79,7 +80,7 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
       + detminor_1_4 / detminor_1_1
     ) ** 0.5
 
-    return Circle((circle_center_x, circle_center_y, circle_radius))
+    return Circle((circle_center_x, circle_center_y), circle_radius)
 
 
 # Reflection across a line is computed by inversion in a circle
