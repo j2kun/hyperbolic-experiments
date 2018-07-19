@@ -83,11 +83,6 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
     return Circle((circle_center_x, circle_center_y), circle_radius)
 
 
-# Reflection across a line is computed by inversion in a circle
-def reflect_across(line, point):
-    pass
-
-
-# Rotation around the origin
 def rotate_around_origin(angle, point):
+    """Rotate the given point about the origin by the given angle."""
     pass
