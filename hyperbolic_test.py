@@ -33,4 +33,12 @@ def test_circle_through_points_unit_circle():
 
 
 def test_circle_through_points_diameter():
-    pass
+    reference_circle = Circle((0, 0), 1)
+    p1 = (1/3, 1/4)
+    p2 = (-1/3, -1/4)
+
+    try:
+        circle_through_points_perpendicular_to_circle(p1, p2, reference_circle)
+        assert False
+    except:
+        pass

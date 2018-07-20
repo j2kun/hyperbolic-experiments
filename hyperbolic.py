@@ -1,3 +1,5 @@
+"""Geometry functions related to hyperbolic geometry."""
+
 from collections import namedtuple
 
 
