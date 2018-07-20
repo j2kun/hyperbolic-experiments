@@ -1,4 +1,11 @@
+import math
+
 from hyperbolic import *
+
+
+def assertAreClose(v1, v2):
+    norm = sum((x1 - x2) ** 2 for (x1, x2) in zip(v1, v1))
+    assert norm ** 0.5 < EPSILON
 
 
 def test_invert_in_circle_horizontal():
@@ -17,10 +24,7 @@ def test_invert_in_circle_diagonal():
     point = (2, 2)
     expected_inverse = (1/2, 1/2)
     actual_inverse = invert_in_circle(Circle(center, radius), point)
-
-    norm = ((actual_inverse[0] - expected_inverse[0]) ** 2
-            + (actual_inverse[1] - expected_inverse[1]) ** 2)
-    assert abs(norm) < 1e-8
+    assertAreClose(actual_inverse, expected_inverse)
 
 
 def test_circle_through_points_unit_circle():
@@ -42,3 +46,9 @@ def test_circle_through_points_diameter():
         assert False
     except:
         pass
+
+
+def test_rotate_around_origin_pi_over_3():
+    angle = math.pi / 3
+    assertAreClose((1 / 2, 3 ** 0.5 / 2), rotate_around_origin(angle, (1, 0)))
+    assertAreClose((-3 ** 0.5 / 2, 1/2), rotate_around_origin(angle, (0, 1)))

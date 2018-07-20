@@ -1,5 +1,6 @@
 """Geometry functions related to hyperbolic geometry."""
 
+import math
 from collections import namedtuple
 
 
@@ -10,7 +11,7 @@ Circle = namedtuple('Circle', ['center', 'radius'])
 def invert_in_circle(circle, point):
     """Compute the inverse of a point with respect to a circle."""
     x, y = point
-    (center_x, center_y), radius = circle
+    (center_x, center_y), radius = (circle.center, circle.radius)
     square_norm = (x - center_x) ** 2 + (y - center_y) ** 2
     x_inverted = center_x + radius ** 2 * (x - center_x) / square_norm
     y_inverted = center_y + radius ** 2 * (y - center_y) / square_norm
@@ -56,8 +57,14 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
         (x, y) = point
         return [x ** 2 + y ** 2, x, y, 1]
 
-    # The equation for the center of the circle passing through three points
-    # is given by the determinants of a cleverly chosen matrix.
+    """The equation for the center of the circle passing through three points
+    is given by the ratios of determinants of a cleverly chosen matrix. This
+    corresponds to solving a system of three equations and three unknowns of
+    the following form, where the unknowns are x0, y0, and r and the values x,
+    y are set to the three points we wish the circle to pass through.
+
+        (x - x0)^2 + (y - y0)^2 = r^2
+    """
     M = [
         row(point1),
         row(point2),
@@ -86,5 +93,17 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
 
 
 def rotate_around_origin(angle, point):
-    """Rotate the given point about the origin by the given angle."""
-    pass
+    """Rotate the given point about the origin by the given angle (in radians).
+    For the disk model, this is the same operation in Euclidean space: the
+    application of a 2x2 rotation matrix.
+    """
+    rotation_matrix = [
+        [math.cos(angle), -math.sin(angle)],
+        [math.sin(angle), math.cos(angle)],
+    ]
+
+    x, y = point
+    return (
+        rotation_matrix[0][0] * x + rotation_matrix[0][1] * y,
+        rotation_matrix[1][0] * x + rotation_matrix[1][1] * y,
+    )
