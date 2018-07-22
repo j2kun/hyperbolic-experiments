@@ -107,3 +107,20 @@ def rotate_around_origin(angle, point):
         rotation_matrix[0][0] * x + rotation_matrix[0][1] * y,
         rotation_matrix[1][0] * x + rotation_matrix[1][1] * y,
     )
+
+
+def orientation(a, b, c):
+    """Compute the orientation of three points visited in sequence, either
+    'clockwise', 'counterclockwise', or 'collinear'.
+    """
+    (a_x, a_y) = a
+    (b_x, b_y) = b
+    (c_x, c_y) = c
+    value = (b_x - a_x) * (c_y - a_y) - (c_x - a_x) * (b_y - a_y)
+
+    if (value > 0):
+        return 'counterclockwise'
+    elif (value < 0):
+        return 'clockwise'
+    else:
+        return 'collinear'
