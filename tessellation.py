@@ -150,9 +150,6 @@ class Vertex(object):
     def degree(self):
         return len(self.edges)
 
-    def is_adjacent_to(self, vertex):
-        return sum(1 for e in self.edges if e.contains(vertex)) > 0
-
     def add_edge(self, vertex):
         e = Edge(self, vertex)
         self.edges.append(e)
@@ -161,11 +158,20 @@ class Vertex(object):
     def __str__(self):
         return "Vertex(layer={}, index={})".format(self.layer, self.index_in_layer)
 
+'''
+    def is_adjacent_to(self, vertex):
+        return sum(1 for e in self.edges if e.contains(vertex)) > 0
+'''
+
 
 class Edge(object):
     def __init__(self, v, w):
         self.incident_vertices = [v, w]
 
+    def __str__(self):
+        return "Edge({}, {})".format(*self.incident_vertices)
+
+'''
     def other(self, vertex):
         """Return the vertex incident to this edge which is not the given vertex."""
         if self.incident_vertices[0] == vertex:
@@ -179,6 +185,4 @@ class Edge(object):
 
     def contains(self, vertex):
         return vertex in self.incident_vertices
-
-    def __str__(self):
-        return "Edge({}, {})".format(*self.incident_vertices)
+'''
