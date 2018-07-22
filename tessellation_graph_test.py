@@ -1,6 +1,6 @@
 import itertools
 
-from tessellation import *
+from tessellation_graph import *
 
 
 def test_valid_configuration():

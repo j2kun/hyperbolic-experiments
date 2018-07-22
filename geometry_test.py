@@ -1,6 +1,6 @@
 import math
 
-from hyperbolic import *
+from geometry import *
 
 
 def assertAreClose(v1, v2):
