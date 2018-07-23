@@ -43,6 +43,9 @@ class TessellationGraph(object):
 
         self.create_layers(num_layers)
 
+    def vertex_at(self, layer, index_in_layer):
+        return self.layers[layer][index_in_layer]
+
     def create_layers(self, num_layers):
         for layer_index in range(1, num_layers):
             layer_size = self.compute_layer_size(layer_index)
@@ -52,6 +55,7 @@ class TessellationGraph(object):
             ]
             self.connect_new_layer(self.layers[-1], new_layer)
             self.layers.append(new_layer)
+            self.vertices.extend(new_layer)
 
     def connect_new_layer(self, previous_layer, next_layer):
         p = self.configuration.numPolygonSides
@@ -67,7 +71,7 @@ class TessellationGraph(object):
         """
         num_traversed_in_next_layer = 0
         num_traversed_in_previous_layer = 0
-        num_traversed_since_previous_layer = 0
+        num_traversed_since_previous_layer_connection = 0
 
         while num_traversed_in_next_layer < len(next_layer):
             next_layer_vertex = next_layer[num_traversed_in_next_layer]
@@ -80,20 +84,22 @@ class TessellationGraph(object):
                 """
                 while previous_layer[num_traversed_in_previous_layer].degree == p:
                     num_traversed_in_previous_layer = (num_traversed_in_previous_layer + 1) % len(previous_layer)
+                    # start each new vertex with an edge connection
+                    num_traversed_since_previous_layer_connection = 0
 
             previous_layer_vertex = previous_layer[num_traversed_in_previous_layer]
 
-
-            if num_traversed_since_previous_layer % (q - 2) == 0:
+            if num_traversed_since_previous_layer_connection % (q - 2) == 0:
                 previous_layer_vertex.add_edge(next_layer_vertex)
                 next_layer_vertex.previous_layer_connection_type = "edge"
             else:
                 next_layer_vertex.previous_layer_connection_type = "vertex"
 
+            # add an edge within the layer
             next_layer_vertex.add_edge(
                 next_layer[(num_traversed_in_next_layer + 1) % len(next_layer)])
 
-            num_traversed_since_previous_layer += 1
+            num_traversed_since_previous_layer_connection += 1
             num_traversed_in_next_layer += 1
 
     def compute_layer_size(self, layer_index):
@@ -158,10 +164,11 @@ class Vertex(object):
     def __str__(self):
         return "Vertex(layer={}, index={})".format(self.layer, self.index_in_layer)
 
-'''
+    def __repr__(self):
+        return str(self)
+
     def is_adjacent_to(self, vertex):
         return sum(1 for e in self.edges if e.contains(vertex)) > 0
-'''
 
 
 class Edge(object):
@@ -170,6 +177,9 @@ class Edge(object):
 
     def __str__(self):
         return "Edge({}, {})".format(*self.incident_vertices)
+
+    def contains(self, vertex):
+        return vertex in self.incident_vertices
 
 '''
     def other(self, vertex):
@@ -182,7 +192,4 @@ class Edge(object):
                     "edge={}, vertex={}".format(self, vertex))
 
         return self.incident_vertices[0]
-
-    def contains(self, vertex):
-        return vertex in self.incident_vertices
 '''
