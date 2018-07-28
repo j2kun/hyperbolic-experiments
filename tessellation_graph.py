@@ -29,8 +29,8 @@ class TessellationGraph(object):
 
     Each layer is a plain list, with vertices oriented so that iterating over
     the list visits the vertices in counterclockwise order, and so that the
-    first vertex in each layer is adjacent to the first vertex in the next
-    layer and the previous layer.
+    first vertex in each layer is adjacent to the first (allowable) vertex in
+    the next layer.
     """
 
     def __init__(self, tessellation_configuration, num_layers=2):
