@@ -154,6 +154,7 @@ def test_four_layer_tessellation_graph_3_7():
         ((2,22), (3,59)),
         ((2,24), (3,62)),
         ((2,25), (3,66)),
+        ((2,26), (3,70)),
         ((2,28), (3,73)),
         ((2,29), (3,77)),
         ((2,31), (3,80)),
@@ -169,8 +170,14 @@ def test_four_layer_tessellation_graph_3_7():
         ((2,44), (3,117)),
     ]
 
-    edges = set(within_second_layer + within_third_layer
-        + first_layer_to_second_layer + second_layer_to_third_layer)
+    edges = set(
+        within_second_layer
+        + within_third_layer
+        + within_fourth_layer
+        + first_layer_to_second_layer
+        + second_layer_to_third_layer
+        + third_layer_to_fourth_layer
+    )
 
     for vertex in graph.vertices:
         print(vertex)
