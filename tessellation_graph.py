@@ -1,3 +1,6 @@
+from collections import deque
+
+
 class TessellationConfiguration(object):
     def __init__(self, numPolygonSides, numPolygonsPerVertex):
         """Create a new configuration
@@ -53,54 +56,117 @@ class TessellationGraph(object):
                 Vertex(layer=layer_index, index_in_layer=i)
                 for i in range(layer_size)
             ]
-            self.connect_new_layer(self.layers[-1], new_layer)
+            self.connect_layer(self.layers[-1], new_layer)
             self.layers.append(new_layer)
             self.vertices.extend(new_layer)
 
-    def connect_new_layer(self, previous_layer, next_layer):
+        self.connect_cyclic_only(self.layers[-1])
+
+    def connect_layer(self, this_layer, next_layer):
+        """Connect the vertices in next_layer to the vertices in
+        this_layer, and connect the edges among vertices in this_layer.
+
+        To ensure that the edge list produced is ordered counterclockwise
+        around each vertex, (though this class does not enforce any geometry,
+        the ordering choices we make give guarantees for the Poincare disk
+        model), for each vertex in this_layer we add edges in the following
+        order:
+
+        1. If this_layer is not the first layer, then there will be an existing edge
+           from a previous invocation of this method.
+        2. The previous vertex in the cyclic ordering of this_layer.
+        3. The relevant vertices in next_layer, in the cyclic order of next_layer.
+        4. The next vertex in the cyclic ordering of this_layer.
+        """
+
         p = self.configuration.numPolygonSides
         q = self.configuration.numPolygonsPerVertex
 
-        """Each polygon vertex corresponds to a cycle of length q, so each
-        time a vertex connects to the previous layer, the next q-2 vertices are
-        skipped before another previous-to-next layer connection. Once a
-        preivous layer vertex has achieved its proper degree p, we know to
-        attach to the next vertex in the previous layer. Whether a node is
-        connected to the previous layer by an edge determines its
-        previous_layer_connection_type.
+        """Initialize two queues for each layer, and we will advance through the
+        queues as the degree of each vertex is filled up.
         """
-        num_traversed_in_next_layer = 0
-        num_traversed_in_previous_layer = 0
-        num_traversed_since_previous_layer_connection = 0
 
-        while num_traversed_in_next_layer < len(next_layer):
-            next_layer_vertex = next_layer[num_traversed_in_next_layer]
-            if len(previous_layer) == 1:
-                num_traversed_in_previous_layer = 0
+        this_layer_queue = deque(this_layer)
+        next_layer_queue = deque(next_layer)
+
+        while this_layer_queue:
+            this_layer_vertex = this_layer_queue.popleft()
+
+            """(2), (4) join this_layer_vertex to the previous vertex in the
+            ordering of this_layer.
+
+            The special edge addition strategy of add_cyclic_edge causes the
+            same result as if (4) was done after (3).
+            """
+            # The center vertex has no within-layer edges
+            if this_layer_vertex.layer > 0:
+                self.add_cyclic_edge(this_layer_vertex, this_layer)
+
+            """(3) join this_layer_vertex to the relevant vertices in
+            next_layer.
+
+            Since this_layer_vertex doesn't yet have an edge
+            to the next vertex in this_layer, its "maximal" degree is p-1.
+            However, at the very end of the process (when this_layer_queue
+            is empty), the last vertex in this_layer to process will have
+            the extra forward edge, so we adjust for that.
+            """
+            if this_layer_vertex.layer == 0 or not this_layer_queue:
+                maximal_degree = p
             else:
-                """The current vertex we're using to connect the previous layer
-                may have become full, or was already full before we visited it
-                (such as can occur in a {3, 7} tiling).
-                """
-                while previous_layer[num_traversed_in_previous_layer].degree == p:
-                    num_traversed_in_previous_layer = (num_traversed_in_previous_layer + 1) % len(previous_layer)
-                    # start each new vertex with an edge connection
-                    num_traversed_since_previous_layer_connection = 0
+                maximal_degree = p - 1
 
-            previous_layer_vertex = previous_layer[num_traversed_in_previous_layer]
-
-            if num_traversed_since_previous_layer_connection % (q - 2) == 0:
-                previous_layer_vertex.add_edge(next_layer_vertex)
+            while this_layer_vertex.degree < maximal_degree:
+                # add the edge connection to the next layer
+                next_layer_vertex = next_layer_queue.popleft()
+                this_layer_vertex.add_edge(next_layer_vertex)
                 next_layer_vertex.previous_layer_connection_type = "edge"
-            else:
-                next_layer_vertex.previous_layer_connection_type = "vertex"
 
-            # add an edge within the layer
-            next_layer_vertex.add_edge(
-                next_layer[(num_traversed_in_next_layer + 1) % len(next_layer)])
+                """There are two cases. In the normal case, we add one edge to
+                a next_layer_vertex, then skip q - 3 subsequent vertices in
+                next_layer that share only a vertex with this_layer_vertex.
 
-            num_traversed_since_previous_layer_connection += 1
-            num_traversed_in_next_layer += 1
+                This rule is violated in multiple instances, such as in layer 0
+                or being the last vertex processed in a layer. All of the
+                exceptional cases are covered by checking to see if the current
+                degree of a vertex is maximal, according to the maximal_degree
+                rule computed above.
+
+                Finally because it can happen in some configurations that the
+                next vertex in this_layer is already full (e.g., in a {3, 7}
+                tiling some vertices in layer 1 will only have edges within the
+                layer and to layer 0) we check to see if the next vertex in
+                this_layer will be skipped.
+                """
+                if this_layer_vertex.degree == maximal_degree:
+                    num_vertices_to_skip = q - 4
+                    if len(this_layer_queue) > 1 and this_layer_queue[0].degree == p - 2:
+                        num_vertices_to_skip -= 1
+                else:
+                    num_vertices_to_skip = q - 3
+
+                for i in range(num_vertices_to_skip):
+                    next_layer_vertex = next_layer_queue.popleft()
+                    next_layer_vertex.previous_layer_connection_type = "vertex"
+                    if not next_layer_queue:
+                        break
+
+    def connect_cyclic_only(self, layer):
+        for vertex in layer:
+            self.add_cyclic_edge(vertex, layer)
+
+    def add_cyclic_edge(self, this_layer_vertex, this_layer):
+        """Add an edge between this_layer_vertex and the previous vertex in the
+        cyclic ordering of this_layer.
+
+        To maintain the ordering property, we append the edge to one edge list,
+        and prepend to the other's edge list.
+        """
+        previous_vertex = this_layer[(this_layer_vertex.index_in_layer - 1) % len(this_layer)]
+        if not this_layer_vertex.is_adjacent_to(previous_vertex):
+            e = Edge(this_layer_vertex, previous_vertex)
+            this_layer_vertex.edges.append(e)
+            previous_vertex.edges.appendleft(e)
 
     def compute_layer_size(self, layer_index):
         p = self.configuration.numPolygonSides
@@ -150,19 +216,21 @@ class Vertex(object):
         self.layer = layer
         self.index_in_layer = index_in_layer
         self.previous_layer_connection_type = None
-        self.edges = []
+        self.edges = deque()
 
     @property
     def degree(self):
         return len(self.edges)
 
     def add_edge(self, vertex):
+        print("Adding edge between %s and %s" % (self, vertex))
         e = Edge(self, vertex)
         self.edges.append(e)
         vertex.edges.append(e)
 
     def __str__(self):
-        return "Vertex(layer={}, index={})".format(self.layer, self.index_in_layer)
+        return "v_{},{}".format(self.layer, self.index_in_layer)
+        # return "Vertex(layer={}, index={})".format(self.layer, self.index_in_layer)
 
     def __repr__(self):
         return str(self)
