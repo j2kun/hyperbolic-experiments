@@ -7,7 +7,39 @@ from collections import namedtuple
 EPSILON = 1e-8
 
 
-Point = namedtuple('Point', ['x', 'y'])
+class Point(namedtuple('Point', ['x', 'y'])):
+    """A point class which doubles as a vector class."""
+    def normalized(self):
+        norm = math.sqrt(inner_product(self, self))
+        return Point(self.x / norm, self.y / norm)
+
+    def project(self, w):
+        """Project self onto the input vector w."""
+        norm_w = math.sqrt(inner_product(w, w))
+        normalized_w = w.normalized()
+        signedLength = inner_product(self, normalized_w)
+
+        return Point(
+                normalized_w.x * signedLength,
+                normalized_w.y * signedLength)
+
+    def __add__(self, other):
+        x, y = other
+        return Point(self.x + x, self.y + y)
+
+    def __sub__(self, other):
+        x, y = other
+        return Point(self.x - x, self.y - y)
+
+    def is_zero(self):
+        return math.sqrt(inner_product(self, self)) < EPSILON
+
+    def is_close_to(self, other):
+        return (self - other).is_zero()
+
+
+def inner_product(v, w):
+    return v.x * w.x + v.y * w.y
 
 
 class Line:
@@ -49,6 +81,13 @@ class Line:
         x, y = point
         return abs(self.y_value(x) - y) < EPSILON
 
+    def reflect(self, point):
+        """Reflect a point across this line."""
+        translated_to_origin = point - self.point
+        projection = translated_to_origin.project(Point(1, self.slope))
+        reflection_vector = translated_to_origin - projection
+        return projection - reflection_vector + self.point
+
     def __eq__(self, other):
         if not isinstance(other, Line):
             raise TypeError("equality check against thing which is not "
@@ -64,6 +103,13 @@ class Line:
 
     def __neq__(self, other):
         return not self.__eq__(other)
+
+    def __str__(self):
+        return "Line(point={}, slope={})".format(
+            self.point, self.slope)
+
+    def __repr__(self):
+        return str(self)
 
 
 class VerticalLine(Line):
@@ -135,7 +181,7 @@ class Circle(namedtuple('Circle', ['center', 'radius'])):
 
         x_inverted = center.x + radius ** 2 * (x - center.x) / square_norm
         y_inverted = center.y + radius ** 2 * (y - center.y) / square_norm
-        return (x_inverted, y_inverted)
+        return Point(x_inverted, y_inverted)
 
 
 def distance(p1, p2):
@@ -258,7 +304,7 @@ def rotate_around_origin(angle, point):
     ]
 
     x, y = point
-    return (
+    return Point(
         rotation_matrix[0][0] * x + rotation_matrix[0][1] * y,
         rotation_matrix[1][0] * x + rotation_matrix[1][1] * y,
     )

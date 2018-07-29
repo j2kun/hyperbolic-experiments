@@ -7,9 +7,10 @@ from geometry import *
 
 def assert_are_close(v1, v2):
     try:
-        norm = sum((x1 - x2) ** 2 for (x1, x2) in zip(v1, v1))
+        assert_that(v1.is_close_to(v2)).is_true()
+        norm = sum((x1 - x2) ** 2 for (x1, x2) in zip(v1, v2))
         assert_that(norm ** 0.5).is_less_than(EPSILON)
-    except:
+    except AttributeError:
         assert_that(abs(v1 - v2)).is_less_than(EPSILON)
 
 
@@ -148,8 +149,8 @@ def test_invert_in_circle_horizontal():
 
 def test_invert_in_circle_diagonal():
     circle = Circle(center=Point(0 , 0), radius=2 ** 0.5)
-    point = (2, 2)
-    expected_inverse = (1/2, 1/2)
+    point = Point(2, 2)
+    expected_inverse = Point(1/2, 1/2)
     actual_inverse = circle.invert_point(point)
     assert_are_close(actual_inverse, expected_inverse)
 
@@ -175,8 +176,10 @@ def test_circle_through_points_diameter():
 
 def test_rotate_around_origin_pi_over_3():
     angle = math.pi / 3
-    assert_are_close((1 / 2, 3 ** 0.5 / 2), rotate_around_origin(angle, (1, 0)))
-    assert_are_close((-3 ** 0.5 / 2, 1/2), rotate_around_origin(angle, (0, 1)))
+    assert_are_close(Point(1 / 2, 3 ** 0.5 / 2),
+            rotate_around_origin(angle, (1, 0)))
+    assert_are_close(Point(-3 ** 0.5 / 2, 1/2),
+            rotate_around_origin(angle, (0, 1)))
 
 
 def test_circle_through_points_with_points_on_circle():
@@ -194,3 +197,15 @@ def test_circle_through_points_with_points_on_circle():
     actual_circle = circle_through_points_perpendicular_to_circle(p1, p2, reference_circle)
     assert_are_close(expected_circle.center, actual_circle.center)
     assert_are_close(expected_circle.radius, actual_circle.radius)
+
+
+def test_reflect_increasing_slope():
+    line = Line(Point(0, 0), 1)
+    assert_are_close(line.reflect(Point(2, -2)), Point(-2, 2))
+    assert_are_close(line.reflect(Point(-6, 4)), Point(4, -6))
+    assert_are_close(line.reflect(Point(4, 4)), Point(4, 4))
+
+
+def test_reflect_decreasing_slope():
+    line = Line(Point(-1, -2), -1)
+    assert_are_close(line.reflect(Point(-2, -3)), Point(0, -1))
