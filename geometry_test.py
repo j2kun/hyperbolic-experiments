@@ -24,25 +24,36 @@ def test_vertical_line_y_value():
 def test_line_eq():
     line1 = Line(Point(1, 0), slope=2)
     line2 = Line(Point(2, 2), slope=2)
-    assert_that(line1).is_equal_to(line2)
+    assert_that(line1 == line2).is_true()
+    assert_that(line2 == line1).is_true()
 
 
 def test_line_neq():
     line1 = Line(Point(1, 0), slope=2)
     line2 = Line(Point(0, -2), slope=2.1)
-    assert_that(line1).is_not_equal_to(line2)
+    assert_that(line1 != line2).is_true()
+    assert_that(line2 != line1).is_true()
 
 
 def test_vertical_line_eq():
     line1 = VerticalLine.at_point(Point(2, 5))
     line2 = VerticalLine.at_point(Point(2, -1))
-    assert_that(line1).is_equal_to(line2)
+    assert_that(line1 == line2).is_true()
+    assert_that(line2 == line1).is_true()
 
 
 def test_vertical_line_neq():
     line1 = VerticalLine.at_point(Point(2, 5))
     line2 = VerticalLine.at_point(Point(2.1, -1))
-    assert_that(line1).is_not_equal_to(line2)
+    assert_that(line1 != line2).is_true()
+    assert_that(line2 != line1).is_true()
+
+
+def test_vertical_line_neq_line():
+    line1 = VerticalLine.at_point(Point(2, 5))
+    line2 = Line(Point(2, 5), slope=1)
+    assert_that(line1 != line2).is_true()
+    assert_that(line2 != line1).is_true()
 
 
 def test_line_intersect_with():

@@ -267,26 +267,9 @@ def rotate_around_origin(angle, point):
 
 
 def intersection_of_common_tangents(circle, point1, point2):
-    try:
-        line_1 = tangent_of_circle_at_point(circle, point1)
-        line_1_vertical = False
-    except VerticalLineException:
-        line_1_vertical = True
-
-    try:
-        line_2 = tangent_of_circle_at_point(circle, point2)
-        line_2_vertical = False
-    except VerticalLineException:
-        line_2_vertical = True
-
-    if line_1_vertical and line_2_vertical:
-        raise Exception("No intersection of two vertical tangents to the same "
-                "circle.")
-    elif line_1_vertical:
-        line_1_x = point1[0]
-        # circle_center =
-
-    return intersection_of_lines(line1, line2)
+    line_1 = circle.tangent_at(point1)
+    line_2 = circle.tangent_at(point2)
+    return line_1.intserect_with(line2)
 
 
 class VerticalLineException(Exception):
