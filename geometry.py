@@ -113,8 +113,6 @@ class Circle(namedtuple('Circle', ['center', 'radius'])):
         """Compute the tangent line to a circle at a point.
 
         Raise an Exception if the point is not on the circle.
-
-        Raise a VerticalLineException if the tangent line has a vertical slope.
         """
         if not self.contains(point):
             raise ValueError("Point is not on circle")
@@ -270,7 +268,3 @@ def intersection_of_common_tangents(circle, point1, point2):
     line_1 = circle.tangent_at(point1)
     line_2 = circle.tangent_at(point2)
     return line_1.intserect_with(line2)
-
-
-class VerticalLineException(Exception):
-    pass
