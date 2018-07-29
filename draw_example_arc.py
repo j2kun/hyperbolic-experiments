@@ -67,19 +67,6 @@ def draw_fundamental_triangle(name):
     dwg.fill(color='white', opacity=0)
 
     reference_circle = Circle(Point(0, 0), radius=1)
-    n = 6
-    z = math.cos(math.pi / 6) ** 2 / math.sin(math.pi / 6)
-    y1 = -1 / z
-    y2 = 1 / z
-    x = math.sqrt(1 - y1**2)
-
-    p1 = Point(x, y1)
-    p2 = Point(x, y2)
-
-    fundamental_triangle_side = circle_through_points_perpendicular_to_circle(
-            p1, p2, reference_circle)
-    print(fundamental_triangle_side)
-
     boundary_circle = dwg.circle(
         center=translate(scale(reference_circle.center)),
         r=scale(reference_circle.radius),
@@ -91,16 +78,31 @@ def draw_fundamental_triangle(name):
 
     triangle = dwg.add(dwg.g(id='triangle', stroke='red', stroke_width=4))
 
-    # draw two diameters for the easy edges.
-    triangle.add(
-            dwg.line(translate(scale((0, 0))), translate(scale((1, 0)))))
-    triangle.add(
-            dwg.line(
-                translate(scale((0, 0))),
-                translate(scale((math.cos(math.pi / n), math.sin(math.pi / n))))))
 
-    draw_arc(dwg, triangle, p1, p2, fundamental_triangle_side.radius,
-            fundamental_triangle_side.center, id="triangle_side")
+    for n in range(5, 11):
+        z = math.cos(math.pi / n) ** 2 / math.sin(math.pi / n)
+        y1 = -1 / z
+        y2 = 1 / z
+        print((n, z, y1))
+        x = math.sqrt(1 - y1**2)
+
+        p1 = Point(x, y1)
+        p2 = Point(x, y2)
+
+        fundamental_triangle_side = circle_through_points_perpendicular_to_circle(
+                p1, p2, reference_circle)
+
+        # draw two diameters for the easy edges.
+        triangle.add(
+                dwg.line(translate(scale((0, 0))), translate(scale((1, 0)))))
+        triangle.add(
+                dwg.line(
+                    translate(scale((0, 0))),
+                    translate(scale((math.cos(math.pi / n), math.sin(math.pi / n))))))
+
+        draw_arc(dwg, triangle, p1, p2, fundamental_triangle_side.radius,
+                fundamental_triangle_side.center, id="triangle_side_n_{}".format(n))
+
     dwg.save()
 
 
