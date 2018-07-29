@@ -25,6 +25,8 @@ def translate(p):
 
 
 def run(name):
+    """Draw some basic arcs of cricles perpendicular to a reference circle.
+    """
     dwg = svgwrite.Drawing(filename=name, debug=True)
     dwg.fill(color='white', opacity=0)
 
@@ -56,6 +58,48 @@ def run(name):
         p2 = rotate_around_origin(degrees, p2)
         circle_center = rotate_around_origin(degrees, circle_center)
 
+    dwg.save()
+
+
+def draw_fundamental_triangle(name):
+    """A test to verify a formula related to the fundamental triangle."""
+    dwg = svgwrite.Drawing(filename=name, debug=True)
+    dwg.fill(color='white', opacity=0)
+
+    reference_circle = Circle((0,0), 1)
+    n = 6
+    z = math.cos(math.pi / 6) ** 2 / math.sin(math.pi / 6)
+    y1 = 1 / z
+    y2 = -1 / z
+    x = math.sqrt(1 - y1**2)
+
+    p1 = (x, y1)
+    p2 = (x, y2)
+
+    fundamental_triangle_side = circle_through_points_perpendicular_to_circle(
+            p1, p2, reference_circle)
+
+    boundary_circle = dwg.circle(
+        center=translate(scale(reference_circle.center)),
+        r=scale(reference_circle.radius),
+        id='boundary_circle',
+        stroke='black',
+        stroke_width=1)
+    boundary_circle.fill(color='white', opacity=0)
+    dwg.add(boundary_circle)
+
+    triangle = dwg.add(dwg.g(id='triangle', stroke='red', stroke_width=4))
+
+    # draw two diameters for the easy edges.
+    triangle.add(
+            dwg.line(translate(scale((0, 0))), translate(scale((1, 0)))))
+    triangle.add(
+            dwg.line(
+                translate(scale((0, 0))),
+                translate(scale((math.cos(math.pi / n), math.sin(math.pi / n))))))
+
+    draw_arc(dwg, triangles, p1, p2, fundamental_triangle_side.radius,
+            fundamental_triangle_side.center)
     dwg.save()
 
 
@@ -93,5 +137,27 @@ def draw_arc(dwg, lines, p1, p2, r, circle_center, id):
     lines.add(path)
 
 
+def bleh():
+    num_sides = 6  # number of sides of the resulting polygon
+    num_per_vertex = 5  # number of polygons at each vertex
+
+    # make the fundamental right triangle with angle measures
+    # pi / p, pi / q, and pi
+    # the pi / p angle is at the center
+    center = (0, 0)
+    bottom_edge_ideal_point = (1, 0)
+    top_edge_ideal_point = (cos(pi / num_sides), sin(pi / num_sides))
+
+    """Let C be the center of the circle.
+
+    Let X be a point along the line [C, top_edge_ideal_point].
+
+    For any choice of X, there is a corresponding choice of Y on the line [C,
+    (0,1)] for which [C, X] and [C, Y] make a right angle.
+
+    I want the C chosen so that the angle between [C, X] and [X, Y] is pi / q.
+    """
+
+
 if __name__ == '__main__':
-    run('basic_shapes.svg')
+    draw_fundamental_triangle('fundamental_triangle.svg')

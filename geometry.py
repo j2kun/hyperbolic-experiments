@@ -1,21 +1,148 @@
-"""Geometry functions related to hyperbolic geometry."""
+"""Euclidean geometry functions related to hyperbolic geometry."""
 
 import math
 from collections import namedtuple
 
 
 EPSILON = 1e-8
-Circle = namedtuple('Circle', ['center', 'radius'])
 
 
-def invert_in_circle(circle, point):
-    """Compute the inverse of a point with respect to a circle."""
-    x, y = point
-    (center_x, center_y), radius = (circle.center, circle.radius)
-    square_norm = (x - center_x) ** 2 + (y - center_y) ** 2
-    x_inverted = center_x + radius ** 2 * (x - center_x) / square_norm
-    y_inverted = center_y + radius ** 2 * (y - center_y) / square_norm
-    return (x_inverted, y_inverted)
+Point = namedtuple('Point', ['x', 'y'])
+
+
+class Line:
+    def __init__(self, point, slope):
+        self.point = point
+        self.slope = slope
+
+    def intersect_with(self, line):
+        """Compute the intersection of two lines.
+
+        Raise an exception if they do not intersect in a single point.
+        """
+        if isinstance(line, VerticalLine):
+            return line.intersect_with(self)
+
+        if self == line:
+            raise ValueError("Can't intersect two identical lines; "
+                    "solution is not a single point.")
+
+        if abs(self.slope) < EPSILON and abs(line.slope) < EPSILON:
+            raise ValueError("Can't intersect two horizontal lines.")
+
+        x1, y1, slope1 = self.point.x, self.point.y, self.slope
+        x2, y2, slope2 = line.point.x, line.point.y, line.slope
+
+        intersection_x = ((slope1 * x1 - slope2 * x2 + y2 - y1)
+            / (slope1 - slope2))
+        intersection_y = y1 + slope1 * (intersection_x - x1)
+
+        return Point(intersection_x, intersection_y)
+
+    def y_value(self, x_value):
+        """Compute the y value of the point on this line that has the given x
+        value.
+        """
+        return self.slope * (x_value - self.point.x) + self.point.y
+
+    def contains(self, point):
+        x, y = point
+        return abs(self.y_value(x) - y) < EPSILON
+
+    def __eq__(self, other):
+        if not isinstance(other, Line):
+            raise TypeError("equality check against thing which is not "
+                "a line: {}".format(other))
+
+        if isinstance(other, VerticalLine):
+            return other.__eq__(self)
+
+        return (
+            abs(self.slope - other.slope) < EPSILON
+            and self.contains(other.point)
+        )
+
+    def __neq__(self, other):
+        return not self.__eq__(other)
+
+
+class VerticalLine(Line):
+    @staticmethod
+    def at_point(point):
+        """Return a VerticalLine instance based at the given point."""
+        return VerticalLine(Point(point.x, 0), "vertical")
+
+    @staticmethod
+    def at(x_value):
+        """Return a VerticalLine represented by the equation x = x_value."""
+        return VerticalLine.at_point(Point(x_value, 0))
+
+    def y_value(self, x_value):
+        raise TypeError("VerticalLine does not support y_value");
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, VerticalLine)
+            and abs(self.point.x - other.point.x) < EPSILON
+        )
+
+    def intersect_with(self, line):
+        """Compute the point of intersection of this vertical line with another
+        line.
+
+        Raise an exception if they do not intersect or if they are the same line.
+        """
+        if isinstance(line, VerticalLine):
+            raise ValueError("Can't intersect two vertical lines; "
+                    "solution is either empty or not a point.")
+
+        return Point(self.point.x, line.y_value(self.point.x))
+
+
+class Circle(namedtuple('Circle', ['center', 'radius'])):
+    def contains(self, point):
+        """Compute whether a point is on a Euclidean circle."""
+        center, radius = (self.center, self.radius)
+        return abs(
+            (point.x - center.x) ** 2
+            + (point.y - center.y) ** 2
+            - radius ** 2
+        ) < EPSILON
+
+    def tangent_at(self, point):
+        """Compute the tangent line to a circle at a point.
+
+        Raise an Exception if the point is not on the circle.
+
+        Raise a VerticalLineException if the tangent line has a vertical slope.
+        """
+        if not self.contains(point):
+            raise ValueError("Point is not on circle")
+
+        if abs(point.y - self.center.y) < EPSILON:
+            return VerticalLine.at_point(point)
+
+        slope = -(point.x - self.center.x) / (point.y - self.center.y)
+        return Line(point, slope)
+
+    def invert_point(self, point):
+        """Compute the inverse of a point with respect to a self."""
+        x, y = point
+        center, radius = (self.center, self.radius)
+        square_norm = (x - center.x) ** 2 + (y - center.y) ** 2
+
+        if abs(square_norm) < EPSILON:
+            raise Exception(
+                "Can't invert the center of a circle in that same circle.")
+
+        x_inverted = center.x + radius ** 2 * (x - center.x) / square_norm
+        y_inverted = center.y + radius ** 2 * (y - center.y) / square_norm
+        return (x_inverted, y_inverted)
+
+
+def distance(p1, p2):
+    """Compute the usual Euclidean plane distance between two points."""
+    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] + p2[1]) ** 2)
 
 
 def det3(A):
@@ -37,6 +164,23 @@ def remove_column(A, removed_col_index):
     ]
 
 
+def orientation(a, b, c):
+    """Compute the orientation of three points visited in sequence, either
+    'clockwise', 'counterclockwise', or 'collinear'.
+    """
+    a_x, a_y = a
+    b_x, b_y = b
+    c_x, c_y = c
+    value = (b_x - a_x) * (c_y - a_y) - (c_x - a_x) * (b_y - a_y)
+
+    if (value > 0):
+        return 'counterclockwise'
+    elif (value < 0):
+        return 'clockwise'
+    else:
+        return 'collinear'
+
+
 def circle_through_points_perpendicular_to_circle(point1, point2, circle):
     """Return a Circle that passes through the two given points and
     intersects the given circle at a perpendicular angle.
@@ -46,12 +190,25 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
     This can be constructed by first inverting one of the points in the
     circle, then constructing the circle passing through all three points.
 
-    Note, if the two points and the center of the input circle lie on a
-    common line, then the hyperbolic line is a diameter of the circle. This
-    function assumes that case has been checked in advance, with an Exception
-    raised otherwise.
+    There are two cases when this may fail:
+
+    (1) If the two points and the center of the input circle lie on a common
+    line, then the hyperbolic line is a diameter of the circle. This function
+    raises an Exception in this case.
+
+    (2) If the input points lie on the circle, then the inversion is a no-op.
+    In this case we can compute the center of the desired circle as the point
+    of intersection of the two tangent lines of the points.
     """
-    point3 = invert_in_circle(circle, point1)
+    if circle.contains(point1):
+        if circle.contains(point2):
+            circle_center = intersection_of_common_tangents(circle, point1, point2)
+            radius = distance(circle_center, point1)
+            return Circle(circle_center, radius)
+
+        point3 = circle.invert_point(point2)
+    else:
+        point3 = circle.invert_point(point1)
 
     def row(point):
         (x, y) = point
@@ -73,7 +230,7 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
 
     detminor_1_1 = det3(remove_column(M, 0))
     if abs(detminor_1_1) < EPSILON:
-        raise Exception("input points {} {} lie on a line with the "
+        raise ValueError("input points {} {} lie on a line with the "
             "center of the circle {}".format(point1, point2, circle))
 
     # detminor stands for "determinant of (matrix) minor"
@@ -89,7 +246,7 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
       + detminor_1_4 / detminor_1_1
     ) ** 0.5
 
-    return Circle((circle_center_x, circle_center_y), circle_radius)
+    return Circle(Point(circle_center_x, circle_center_y), circle_radius)
 
 
 def rotate_around_origin(angle, point):
@@ -109,18 +266,28 @@ def rotate_around_origin(angle, point):
     )
 
 
-def orientation(a, b, c):
-    """Compute the orientation of three points visited in sequence, either
-    'clockwise', 'counterclockwise', or 'collinear'.
-    """
-    (a_x, a_y) = a
-    (b_x, b_y) = b
-    (c_x, c_y) = c
-    value = (b_x - a_x) * (c_y - a_y) - (c_x - a_x) * (b_y - a_y)
+def intersection_of_common_tangents(circle, point1, point2):
+    try:
+        line_1 = tangent_of_circle_at_point(circle, point1)
+        line_1_vertical = False
+    except VerticalLineException:
+        line_1_vertical = True
 
-    if (value > 0):
-        return 'counterclockwise'
-    elif (value < 0):
-        return 'clockwise'
-    else:
-        return 'collinear'
+    try:
+        line_2 = tangent_of_circle_at_point(circle, point2)
+        line_2_vertical = False
+    except VerticalLineException:
+        line_2_vertical = True
+
+    if line_1_vertical and line_2_vertical:
+        raise Exception("No intersection of two vertical tangents to the same "
+                "circle.")
+    elif line_1_vertical:
+        line_1_x = point1[0]
+        # circle_center =
+
+    return intersection_of_lines(line1, line2)
+
+
+class VerticalLineException(Exception):
+    pass
