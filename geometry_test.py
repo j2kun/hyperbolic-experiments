@@ -5,9 +5,12 @@ import pytest
 from geometry import *
 
 
-def assertAreClose(v1, v2):
-    norm = sum((x1 - x2) ** 2 for (x1, x2) in zip(v1, v1))
-    assert_that(norm ** 0.5).is_less_than(EPSILON)
+def assert_are_close(v1, v2):
+    try:
+        norm = sum((x1 - x2) ** 2 for (x1, x2) in zip(v1, v1))
+        assert_that(norm ** 0.5).is_less_than(EPSILON)
+    except:
+        assert_that(abs(v1 - v2)).is_less_than(EPSILON)
 
 
 def test_line_y_value():
@@ -148,7 +151,7 @@ def test_invert_in_circle_diagonal():
     point = (2, 2)
     expected_inverse = (1/2, 1/2)
     actual_inverse = circle.invert_point(point)
-    assertAreClose(actual_inverse, expected_inverse)
+    assert_are_close(actual_inverse, expected_inverse)
 
 
 def test_circle_through_points_unit_circle():
@@ -172,5 +175,22 @@ def test_circle_through_points_diameter():
 
 def test_rotate_around_origin_pi_over_3():
     angle = math.pi / 3
-    assertAreClose((1 / 2, 3 ** 0.5 / 2), rotate_around_origin(angle, (1, 0)))
-    assertAreClose((-3 ** 0.5 / 2, 1/2), rotate_around_origin(angle, (0, 1)))
+    assert_are_close((1 / 2, 3 ** 0.5 / 2), rotate_around_origin(angle, (1, 0)))
+    assert_are_close((-3 ** 0.5 / 2, 1/2), rotate_around_origin(angle, (0, 1)))
+
+
+def test_circle_through_points_with_points_on_circle():
+    reference_circle = Circle(Point(0, 0), radius=1)
+    n = 6
+    z = math.cos(math.pi / 6) ** 2 / math.sin(math.pi / 6)
+    y1 = -1 / z
+    y2 = 1 / z
+    x = math.sqrt(1 - y1**2)
+
+    p1 = Point(x, y1)
+    p2 = Point(x, y2)
+
+    expected_circle = Circle(center=Point(x=1.3416407864998734, y=0), radius=0.8944271909999155)
+    actual_circle = circle_through_points_perpendicular_to_circle(p1, p2, reference_circle)
+    assert_are_close(expected_circle.center, actual_circle.center)
+    assert_are_close(expected_circle.radius, actual_circle.radius)

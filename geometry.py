@@ -265,6 +265,6 @@ def rotate_around_origin(angle, point):
 
 
 def intersection_of_common_tangents(circle, point1, point2):
-    line_1 = circle.tangent_at(point1)
-    line_2 = circle.tangent_at(point2)
-    return line_1.intserect_with(line2)
+    line1 = circle.tangent_at(point1)
+    line2 = circle.tangent_at(point2)
+    return line1.intersect_with(line2)

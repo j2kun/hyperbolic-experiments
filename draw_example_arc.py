@@ -66,18 +66,19 @@ def draw_fundamental_triangle(name):
     dwg = svgwrite.Drawing(filename=name, debug=True)
     dwg.fill(color='white', opacity=0)
 
-    reference_circle = Circle((0,0), 1)
+    reference_circle = Circle(Point(0, 0), radius=1)
     n = 6
     z = math.cos(math.pi / 6) ** 2 / math.sin(math.pi / 6)
-    y1 = 1 / z
-    y2 = -1 / z
+    y1 = -1 / z
+    y2 = 1 / z
     x = math.sqrt(1 - y1**2)
 
-    p1 = (x, y1)
-    p2 = (x, y2)
+    p1 = Point(x, y1)
+    p2 = Point(x, y2)
 
     fundamental_triangle_side = circle_through_points_perpendicular_to_circle(
             p1, p2, reference_circle)
+    print(fundamental_triangle_side)
 
     boundary_circle = dwg.circle(
         center=translate(scale(reference_circle.center)),
@@ -98,8 +99,8 @@ def draw_fundamental_triangle(name):
                 translate(scale((0, 0))),
                 translate(scale((math.cos(math.pi / n), math.sin(math.pi / n))))))
 
-    draw_arc(dwg, triangles, p1, p2, fundamental_triangle_side.radius,
-            fundamental_triangle_side.center)
+    draw_arc(dwg, triangle, p1, p2, fundamental_triangle_side.radius,
+            fundamental_triangle_side.center, id="triangle_side")
     dwg.save()
 
 
