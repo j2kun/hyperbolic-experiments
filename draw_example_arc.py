@@ -24,6 +24,14 @@ def translate(p):
     return [x + dx for (x, dx) in zip(p, translation)]
 
 
+def render(p):
+    if isinstance(p, tuple):
+        (x, y) = p
+        return translate(scale((x, -y)))
+    else:
+        return scale(p)
+
+
 def run(name):
     """Draw some basic arcs of cricles perpendicular to a reference circle.
     """
@@ -31,7 +39,7 @@ def run(name):
     dwg.fill(color='white', opacity=0)
 
     reference_circle = Circle((0,0), 1)
-    reference_circle = Circle(translate(scale(reference_circle.center)), scale(reference_circle.radius))
+    reference_circle = Circle(render(reference_circle.center), render(reference_circle.radius))
 
     boundary_circle = dwg.circle(
         center=reference_circle.center,
@@ -68,8 +76,8 @@ def draw_fundamental_triangle(name):
 
     reference_circle = Circle(Point(0, 0), radius=1)
     boundary_circle = dwg.circle(
-        center=translate(scale(reference_circle.center)),
-        r=scale(reference_circle.radius),
+        center=render(reference_circle.center),
+        r=render(reference_circle.radius),
         id='boundary_circle',
         stroke='black',
         stroke_width=1)
@@ -94,11 +102,11 @@ def draw_fundamental_triangle(name):
 
         # draw two diameters for the easy edges.
         triangle.add(
-                dwg.line(translate(scale((0, 0))), translate(scale((1, 0)))))
+                dwg.line(render((0, 0)), render((1, 0))))
         triangle.add(
                 dwg.line(
-                    translate(scale((0, 0))),
-                    translate(scale((math.cos(math.pi / n), math.sin(math.pi / n))))))
+                    render((0, 0)),
+                    render((math.cos(math.pi / n), math.sin(math.pi / n)))))
 
         draw_arc(dwg, triangle, p1, p2, fundamental_triangle_side.radius,
                 fundamental_triangle_side.center, id="triangle_side_n_{}".format(n))
@@ -106,22 +114,114 @@ def draw_fundamental_triangle(name):
     dwg.save()
 
 
-def draw_arc(dwg, lines, p1, p2, r, circle_center, id):
-    use_positive_angle_dir = orientation(p1, p2, circle_center) == 'counterclockwise'
+def draw_and_rotate_fundamental_triangle(name):
+    """A test to verify a formula related to the fundamental triangle.
+
+    If we reflect it, does it wrap all the way around?
+    """
+    dwg = svgwrite.Drawing(filename=name, debug=True)
+    dwg.fill(color='white', opacity=0)
+
+    reference_circle = Circle(Point(0, 0), radius=1)
+    boundary_circle = dwg.circle(
+        center=render(reference_circle.center),
+        r=render(reference_circle.radius),
+        id='boundary_circle',
+        stroke='black',
+        stroke_width=1)
+    boundary_circle.fill(color='white', opacity=0)
+    dwg.add(boundary_circle)
+
+    triangle = dwg.add(dwg.g(id='rotated_triangle', stroke='red', stroke_width=4))
+
+    n = 6
+    z = math.cos(math.pi / n) ** 2 / math.sin(math.pi / n)
+    y1 = -1 / z
+    y2 = 1 / z
+    x = math.sqrt(1 - y1**2)
+
+    p0 = Point(0, 0)
+    # these are ideal points
+    ideal1 = Point(x, y1)
+    ideal2 = Point(x, y2)
+
+    """We need to intersect the circle defined by the ideal points (ideal1, ideal2)
+    with the lines [(0, 0), (cos(pi/n), sin(pi/n))] and [(0, 0), (1, 0)].
+    """
+    triangle_side = circle_through_points_perpendicular_to_circle(
+            ideal1, ideal2, reference_circle)
+
+    top_intersection_points = triangle_side.intersect_with_line(
+            Line(Point(0, 0), math.sin(math.pi / n) / math.cos(math.pi / n)))
+
+    p1 = min(top_intersection_points, key=lambda p: distance(p0, p))
+
+    bottom_intersection_points = triangle_side.intersect_with_line(
+            Line(Point(0, 0), 0))
+
+    p2 = min(bottom_intersection_points, key=lambda p: distance(p0, p))
+
+    print(p0, p1, p2)
+
+    draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
+    # p0, p1, p2 = reflect([p0, p1, p2], 0, 1, reference_circle.center)
+    # draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
+
+    dwg.save()
+
+
+def reflect(points, index1, index2, circle_center):
+    p, q = points[index1], points[index2]
+    if orientation(p, q, circle_center) == 'collinear':
+        # reflect across diameter spanning center -> p
+        reflection_line = Line.through(circle_center, p)
+        return tuple(reflection_line.reflect(p) for p in points)
+    else:
+        fundamental_triangle_side = circle_through_points_perpendicular_to_circle(
+                p, q, reference_circle)
+        return tuple(
+            fundamental_triangle_side.invert_point(p) for p in points
+        )
+
+
+def draw_triangle(dwg, triangle, p1, p2, p3, disk_boundary):
+    # for each pair, draw straight line if diameter, otherwise draw arc
+    for (p, q) in [(p1, p2), (p2, p3), (p1, p3)]:
+        print("Drawing line {} -> {}".format(p, q))
+        if orientation(p, q, disk_boundary.center) == 'collinear':
+            line = dwg.line(render(p), render(q))
+            triangle.add(line)
+        else:
+            hyperbolic_line = circle_through_points_perpendicular_to_circle(
+                p, q, disk_boundary)
+
+            print("Hyperbolic line is {}".format(hyperbolic_line))
+            draw_arc(dwg, triangle, p, q,
+                    hyperbolic_line.radius,
+                    hyperbolic_line.center)
+
+
+def draw_arc(dwg, lines, p1, p2, r, circle_center, id=None):
+    use_positive_angle_dir = orientation(p1, p2, circle_center) == 'clockwise'
 
     """
-    Hypothesis: Let x, y, be the start and end of the hyperbolic line segment,
+    Claim: Let x, y, be the start and end of the hyperbolic line segment,
     and c the center of the circle this line segment is a part of. Then we
     should use angle_dir='+' if and only if the sequence (x, y, c) makes a
-    counterclockwise turn.
+    clockwise turn. Note this is in the coordinates with a flipped y-axis from
+    the standard coordinates.
     """
 
-    p1 = translate(scale(p1))
-    p2 = translate(scale(p2))
-    r = scale(r)
-    circle_center = translate(scale(circle_center))
+    p1 = render(p1)
+    p2 = render(p2)
+    r = render(r)
+    circle_center = render(circle_center)
 
-    path = dwg.path('m', id=str(id) + '_' + orientation(p1, p2, circle_center))
+    if id:
+        path = dwg.path('m', id=id)
+    else:
+        path = dwg.path('m')
+
     path.push(p1)
     path.push_arc(
         target=p2,
@@ -140,27 +240,5 @@ def draw_arc(dwg, lines, p1, p2, r, circle_center, id):
     lines.add(path)
 
 
-def bleh():
-    num_sides = 6  # number of sides of the resulting polygon
-    num_per_vertex = 5  # number of polygons at each vertex
-
-    # make the fundamental right triangle with angle measures
-    # pi / p, pi / q, and pi
-    # the pi / p angle is at the center
-    center = (0, 0)
-    bottom_edge_ideal_point = (1, 0)
-    top_edge_ideal_point = (cos(pi / num_sides), sin(pi / num_sides))
-
-    """Let C be the center of the circle.
-
-    Let X be a point along the line [C, top_edge_ideal_point].
-
-    For any choice of X, there is a corresponding choice of Y on the line [C,
-    (0,1)] for which [C, X] and [C, Y] make a right angle.
-
-    I want the C chosen so that the angle between [C, X] and [X, Y] is pi / q.
-    """
-
-
 if __name__ == '__main__':
-    draw_fundamental_triangle('fundamental_triangle.svg')
+    draw_and_rotate_fundamental_triangle('rotated_triangle.svg')
