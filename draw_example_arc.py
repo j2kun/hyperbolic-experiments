@@ -114,7 +114,7 @@ def draw_fundamental_triangle(name):
     dwg.save()
 
 
-def draw_and_rotate_fundamental_triangle(name):
+def draw_and_rotate_fundamental_triangle_around_center(name):
     """A test to verify a formula related to the fundamental triangle.
 
     If we reflect it, does it wrap all the way around?
@@ -161,33 +161,96 @@ def draw_and_rotate_fundamental_triangle(name):
 
     p2 = min(bottom_intersection_points, key=lambda p: distance(p0, p))
 
-    print(p0, p1, p2)
-
-    draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
-    # p0, p1, p2 = reflect([p0, p1, p2], 0, 1, reference_circle.center)
-    # draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
+    for i in range(n):
+        draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
+        p0, p1, p2 = reflect([p0, p1, p2], 0, 1, reference_circle.center)
+        draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
+        p0, p1, p2 = reflect([p0, p1, p2], 0, 2, reference_circle.center)
 
     dwg.save()
 
 
-def reflect(points, index1, index2, circle_center):
+def draw_and_rotate_fundamental_triangle_around_vertex(name):
+    """A test to verify a formula related to the fundamental triangle.
+
+    If we reflect it, does it wrap all the way around?
+    """
+    dwg = svgwrite.Drawing(filename=name, debug=True)
+    dwg.fill(color='white', opacity=0)
+
+    reference_circle = Circle(Point(0, 0), radius=1)
+    boundary_circle = dwg.circle(
+        center=render(reference_circle.center),
+        r=render(reference_circle.radius),
+        id='boundary_circle',
+        stroke='black',
+        stroke_width=1)
+    boundary_circle.fill(color='white', opacity=0)
+    dwg.add(boundary_circle)
+
+    triangle = dwg.add(dwg.g(id='rotated_triangle', stroke='red', stroke_width=4))
+
+    n = 6
+    z = math.cos(math.pi / n) ** 2 / math.sin(math.pi / n)
+    y1 = -1 / z
+    y2 = 1 / z
+    x = math.sqrt(1 - y1**2)
+
+    p0 = Point(0, 0)
+    # these are ideal points
+    ideal1 = Point(x, y1)
+    ideal2 = Point(x, y2)
+
+    """We need to intersect the circle defined by the ideal points (ideal1, ideal2)
+    with the lines [(0, 0), (cos(pi/n), sin(pi/n))] and [(0, 0), (1, 0)].
+    """
+    triangle_side = circle_through_points_perpendicular_to_circle(
+            ideal1, ideal2, reference_circle)
+
+    top_intersection_points = triangle_side.intersect_with_line(
+            Line(Point(0, 0), math.sin(math.pi / n) / math.cos(math.pi / n)))
+
+    p1 = min(top_intersection_points, key=lambda p: distance(p0, p))
+
+    bottom_intersection_points = triangle_side.intersect_with_line(
+            Line(Point(0, 0), 0))
+
+    p2 = min(bottom_intersection_points, key=lambda p: distance(p0, p))
+
+    for i in range(4):
+        draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
+        p0, p1, p2 = reflect([p0, p1, p2], 0, 1, reference_circle)
+        draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
+        p0, p1, p2 = reflect([p0, p1, p2], 1, 2, reference_circle)
+
+    dwg.save()
+
+
+def reflect(points, index1, index2, reference_circle):
     p, q = points[index1], points[index2]
-    if orientation(p, q, circle_center) == 'collinear':
-        # reflect across diameter spanning center -> p
-        reflection_line = Line.through(circle_center, p)
+    print("\nReflecting \n {} \nacross the line \n {}".format(
+        points, [p, q]))
+
+    if orientation(p, q, reference_circle.center) == 'collinear':
+        # reflect across diameter spanning p -> q
+        reflection_line = Line.through(p, q)
         return tuple(reflection_line.reflect(p) for p in points)
     else:
         fundamental_triangle_side = circle_through_points_perpendicular_to_circle(
                 p, q, reference_circle)
+        output = tuple(
+            fundamental_triangle_side.invert_point(p) for p in points
+        )
+        print("reflected is {}".format(output))
         return tuple(
             fundamental_triangle_side.invert_point(p) for p in points
         )
 
 
 def draw_triangle(dwg, triangle, p1, p2, p3, disk_boundary):
+    print("\nDrawing triangle \n {}\n {}\n {}".format(p1, p2, p3))
     # for each pair, draw straight line if diameter, otherwise draw arc
     for (p, q) in [(p1, p2), (p2, p3), (p1, p3)]:
-        print("Drawing line {} -> {}".format(p, q))
         if orientation(p, q, disk_boundary.center) == 'collinear':
             line = dwg.line(render(p), render(q))
             triangle.add(line)
@@ -195,7 +258,6 @@ def draw_triangle(dwg, triangle, p1, p2, p3, disk_boundary):
             hyperbolic_line = circle_through_points_perpendicular_to_circle(
                 p, q, disk_boundary)
 
-            print("Hyperbolic line is {}".format(hyperbolic_line))
             draw_arc(dwg, triangle, p, q,
                     hyperbolic_line.radius,
                     hyperbolic_line.center)
@@ -241,4 +303,4 @@ def draw_arc(dwg, lines, p1, p2, r, circle_center, id=None):
 
 
 if __name__ == '__main__':
-    draw_and_rotate_fundamental_triangle('rotated_triangle.svg')
+    draw_and_rotate_fundamental_triangle_around_vertex('rotated_triangle_vertex.svg')

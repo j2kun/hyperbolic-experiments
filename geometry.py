@@ -135,7 +135,7 @@ class VerticalLine(Line):
 
     def reflect(self, point):
         """Reflect a point across this line."""
-        return Point(point.x - 2 * self.point.x, point.y)
+        return Point(2 * self.point.x - point.x, point.y)
 
     def intersect_with(self, line):
         """Compute the point of intersection of this vertical line with another
@@ -278,9 +278,9 @@ def orientation(a, b, c):
     c_x, c_y = c
     value = (b_x - a_x) * (c_y - a_y) - (c_x - a_x) * (b_y - a_y)
 
-    if (value > 0):
+    if (value > EPSILON):
         return 'counterclockwise'
-    elif (value < 0):
+    elif (value < -EPSILON):
         return 'clockwise'
     else:
         return 'collinear'
