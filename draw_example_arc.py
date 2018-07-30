@@ -190,38 +190,23 @@ def draw_and_rotate_fundamental_triangle_around_vertex(name):
 
     triangle = dwg.add(dwg.g(id='rotated_triangle', stroke='red', stroke_width=4))
 
-    n = 6
-    z = math.cos(math.pi / n) ** 2 / math.sin(math.pi / n)
-    y1 = -1 / z
-    y2 = 1 / z
-    x = math.sqrt(1 - y1**2)
+    p = 6
+    q = 4
+    center, top, bottom = compute_fundamental_triangle(p, q)
 
-    p0 = Point(0, 0)
-    # these are ideal points
-    ideal1 = Point(x, y1)
-    ideal2 = Point(x, y2)
-
-    """We need to intersect the circle defined by the ideal points (ideal1, ideal2)
-    with the lines [(0, 0), (cos(pi/n), sin(pi/n))] and [(0, 0), (1, 0)].
-    """
-    triangle_side = circle_through_points_perpendicular_to_circle(
-            ideal1, ideal2, reference_circle)
-
-    top_intersection_points = triangle_side.intersect_with_line(
-            Line(Point(0, 0), math.sin(math.pi / n) / math.cos(math.pi / n)))
-
-    p1 = min(top_intersection_points, key=lambda p: distance(p0, p))
-
-    bottom_intersection_points = triangle_side.intersect_with_line(
-            Line(Point(0, 0), 0))
-
-    p2 = min(bottom_intersection_points, key=lambda p: distance(p0, p))
-
-    for i in range(4):
+    p0, p1, p2 = center, top, bottom
+    for i in range(q):
         draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
         p0, p1, p2 = reflect([p0, p1, p2], 0, 1, reference_circle)
         draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
         p0, p1, p2 = reflect([p0, p1, p2], 1, 2, reference_circle)
+
+    p0, p1, p2 = center, top, bottom
+    for i in range(p):
+        draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
+        p0, p1, p2 = reflect([p0, p1, p2], 0, 1, reference_circle)
+        draw_triangle(dwg, triangle, p0, p1, p2, reference_circle)
+        p0, p1, p2 = reflect([p0, p1, p2], 0, 2, reference_circle)
 
     dwg.save()
 
@@ -293,13 +278,57 @@ def draw_arc(dwg, lines, p1, p2, r, circle_center, id=None):
         angle_dir='+' if use_positive_angle_dir else '-',
         absolute=True)
 
+    """ Uncomment to see the circle containing this arc
     dwg.add(dwg.circle(
         center=circle_center,
         r=r,
         stroke='green',
         stroke_width=1))
+    """
 
     lines.add(path)
+
+
+def compute_fundamental_triangle(p, q):
+    center = Point(0, 0)
+    cos_p, sin_p = math.cos(math.pi / p), math.sin(math.pi / p)
+
+    """Desired point is b = (b_x, b_y). This point is on the line
+    y = (sin_p / cos_p) x and on an unknown circle C perpendicular to the unit
+    circle with center g = (g_x, 0).
+
+    If a = (0, 0) and d = (d_x, 0) is the intersection of the line [ag] with C,
+    then we need (hyperbolic) angle abd to be pi / q.
+
+    This is the same as requiring that the tangent line to C at b forms an angle
+    of pi / q with the line between a and (cos_p, sin_p).
+
+    This tangent line has equation
+
+        y - b_y = m_b (x - b_x)    where m_b = -(b_x - g_x) / b_y
+
+    from the point b, the line is represented by the vector (1, m_b), and translating
+    that to the center (imagining) we see that the sum of angle dab and
+    (hyperbolic) angle abd is pi / p + pi / q, giving
+
+        tan(pi / p + pi / q) = -m_b
+
+    Or equivalently, using the fact that b is on y = (sin_p / cos_p) x,
+
+        tan(pi / p + pi / q) (sin_p / cos_p) = (G_x - b_x) / b_x
+    """
+
+    g_x = math.sqrt(2)
+    Z = math.tan(math.pi / p + math.pi / q) * sin_p / cos_p
+    b_x = g_x / (Z + 1)
+
+    b_y = b_x * (sin_p / cos_p)
+    b = Point(b_x, b_y)
+
+    d_x = g_x - math.sqrt(b_y ** 2 + (b_x - g_x) ** 2)
+
+    return [center, b, Point(d_x, 0)]
+
 
 
 if __name__ == '__main__':
