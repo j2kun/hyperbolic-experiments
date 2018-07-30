@@ -5,13 +5,25 @@ import pytest
 from geometry import *
 
 
-def assert_are_close(v1, v2):
+def is_close(v1, v2):
     try:
-        assert_that(v1.is_close_to(v2)).is_true()
-        norm = sum((x1 - x2) ** 2 for (x1, x2) in zip(v1, v2))
-        assert_that(norm ** 0.5).is_less_than(EPSILON)
+        return v1.is_close_to(v2)
     except AttributeError:
-        assert_that(abs(v1 - v2)).is_less_than(EPSILON)
+        return abs(v1 - v2) < EPSILON
+
+
+def assert_are_close(v1, v2):
+    assert_that(is_close(v1, v2)).is_true()
+
+
+def assert_iterables_are_close(s1, s2):
+    # two iterables are close if each item in one is close to some item
+    # in the other
+    for item in s1:
+        assert_that(any(is_close(item, x) for x in s2)).is_true()
+
+    for item in s2:
+        assert_that(any(is_close(item, x) for x in s1)).is_true()
 
 
 def test_line_y_value():
@@ -209,3 +221,55 @@ def test_reflect_increasing_slope():
 def test_reflect_decreasing_slope():
     line = Line(Point(-1, -2), -1)
     assert_are_close(line.reflect(Point(-2, -3)), Point(0, -1))
+
+
+def test_circle_intersect_with_vertical_line():
+    line = VerticalLine.at_point(Point(math.cos(math.pi / 4), -1))
+    circle = Circle(Point(0, 0), 1)
+    assert_iterables_are_close(
+       circle.intersect_with_line(line),
+       set([
+           Point(math.cos(math.pi / 4), math.sin(math.pi / 4)),
+           Point(math.cos(math.pi / 4), -math.sin(math.pi / 4))
+       ]))
+
+
+def test_circle_intersect_with_vertical_tangent():
+    line = VerticalLine.at_point(Point(-1, -1))
+    circle = Circle(Point(0, 0), 1)
+    assert_iterables_are_close(
+       circle.intersect_with_line(line),
+       set([Point(-1, 0)]))
+
+
+def test_circle_intersect_with_vertical_line_empty():
+    line = VerticalLine.at_point(Point(-2, -1))
+    circle = Circle(Point(0, 0), 1)
+    assert_that(circle.intersect_with_line(line)).is_empty()
+
+
+def test_circle_intersect_with_line():
+    line = Line(Point(-1, -1), 1)
+    circle = Circle(Point(0, 0), 1)
+    assert_iterables_are_close(
+       circle.intersect_with_line(line),
+       set([
+           Point(math.cos(math.pi / 4), math.sin(math.pi / 4)),
+           Point(-math.cos(math.pi / 4), -math.sin(math.pi / 4))
+        ]))
+
+
+def test_circle_intersect_with_line_tangent():
+    tangency_point = Point(math.cos(math.pi / 4), math.sin(math.pi / 4))
+    line = Line(tangency_point + Point(-3, 3), -1)
+    circle = Circle(Point(0, 0), 1)
+    assert_iterables_are_close(
+       circle.intersect_with_line(line),
+       set([tangency_point]))
+
+
+def test_circle_intersect_with_line_empty():
+    tangency_point = Point(math.cos(math.pi / 4), math.sin(math.pi / 4))
+    line = Line(tangency_point + Point(-3, 7), -2)
+    circle = Circle(Point(0, 0), 1)
+    assert_that(circle.intersect_with_line(line)).is_empty()

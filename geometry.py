@@ -47,6 +47,13 @@ class Line:
         self.point = point
         self.slope = slope
 
+    @staticmethod
+    def through(p1, p2):
+        """Return a Line through the two given points."""
+        if abs(p1.x - p2.x) < EPSILON:
+            return VerticalLine.at_point(p1)
+        return Line(p1, (p2.y - p1.y) / (p2.x - p1.x))
+
     def intersect_with(self, line):
         """Compute the intersection of two lines.
 
@@ -126,11 +133,9 @@ class VerticalLine(Line):
     def y_value(self, x_value):
         raise TypeError("VerticalLine does not support y_value");
 
-    def __eq__(self, other):
-        return (
-            isinstance(other, VerticalLine)
-            and abs(self.point.x - other.point.x) < EPSILON
-        )
+    def reflect(self, point):
+        """Reflect a point across this line."""
+        return Point(point.x - 2 * self.point.x, point.y)
 
     def intersect_with(self, line):
         """Compute the point of intersection of this vertical line with another
@@ -143,6 +148,12 @@ class VerticalLine(Line):
                     "solution is either empty or not a point.")
 
         return Point(self.point.x, line.y_value(self.point.x))
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, VerticalLine)
+            and abs(self.point.x - other.point.x) < EPSILON
+        )
 
 
 class Circle(namedtuple('Circle', ['center', 'radius'])):
@@ -182,6 +193,56 @@ class Circle(namedtuple('Circle', ['center', 'radius'])):
         x_inverted = center.x + radius ** 2 * (x - center.x) / square_norm
         y_inverted = center.y + radius ** 2 * (y - center.y) / square_norm
         return Point(x_inverted, y_inverted)
+
+    def intersect_with_line(self, line):
+        """Return a possibly empty set containing the points of intersection
+        of the context circle and the given line.
+
+        Substitute line equation in circle equation, and solve resulting
+        quadratic equation.
+        """
+        if isinstance(line, VerticalLine):
+            discriminant = self.radius ** 2 - (line.point.x - self.center.x)**2
+            if abs(discriminant) < EPSILON:
+                discriminant = 0
+
+            if discriminant < 0:
+                return set()
+
+            sqrt_disc = math.sqrt(discriminant)
+            return set([
+                Point(line.point.x, self.center.y + sqrt_disc),
+                Point(line.point.x, self.center.y - sqrt_disc),
+            ])
+        else:
+            A = line.slope ** 2 + 1
+            B = 2 * (line.slope * line.point.y
+                    - line.slope * self.center.y
+                    - self.center.x
+                    - line.slope ** 2 * line.point.x)
+            C = (
+                self.center.x ** 2
+                + line.slope ** 2 * line.point.x ** 2
+                + (line.point.y - self.center.y) ** 2
+                - 2 * line.slope * line.point.x * line.point.y
+                + 2 * line.slope * line.point.x * self.center.y
+                - self.radius ** 2
+            )
+            discriminant = B * B - 4 * A * C
+            if abs(discriminant) < EPSILON:
+                discriminant = 0
+
+            if discriminant < 0:
+                return set()
+
+            sqrt_disc = math.sqrt(discriminant)
+            x_values = set([
+                (-B + sqrt_disc) / (2 * A),
+                (-B - sqrt_disc) / (2 * A),
+            ])
+            return set(
+                Point(x, line.y_value(x)) for x in x_values
+            )
 
 
 def distance(p1, p2):
