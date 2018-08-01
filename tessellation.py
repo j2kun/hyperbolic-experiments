@@ -26,13 +26,3 @@ class HyperbolicTessellation(object):
         center = (0, 0)
         bottom_edge_ideal_point = (1, 0)
         top_edge_ideal_point = (cos(pi / num_sides), sin(pi / num_sides))
-
-        I
-
-        center_polygon = [
-            (r * cos(2 * pi * k / num_sides), r * sin(2 * pi * k / num_sides))
-            for k in range(n)]
-
-        self.layers = [[center_polygon]]
-        self.edges = [(center_polygon[i], center_polygon[(i+1) % len(center_polygon_])
-                for i in range()]
