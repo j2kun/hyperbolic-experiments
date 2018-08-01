@@ -1,8 +1,8 @@
-from math import sin, cos, pi
-import geometry
+import math
+from geometry import Point
 
 
-def compute_fundamental_triangle(p, q):
+def compute_fundamental_triangle(tessellation_configuration):
     """Compute the vertices of the hyperbolic triangle with the following
     properties:
 
@@ -46,6 +46,9 @@ def compute_fundamental_triangle(p, q):
 
     We can then solve for b_y, g, and d_x trivially.
     """
+    p = tessellation_configuration.numPolygonSides
+    q = tessellation_configuration.numPolygonsPerVertex
+
     tan_p = math.tan(math.pi / p)
     Z = math.tan(math.pi / p + math.pi / q) * tan_p
 
@@ -71,17 +74,8 @@ class HyperbolicTessellation(object):
 
     def __init__(self,
             configuration,
-            center_polygon_radius=0.5,
             num_layers=5):
         self.configuration = configuration
-        r = center_polygon_radius
+        center, top_vertex, x_axis_vertex = compute_fundamental_triangle(configuration)
 
-        num_sides = configuration.numPolygonSides
-        q = configuration.numPolygonsPerVertex
-
-        # make the fundamental right triangle with angle measures
-        # pi / p, pi / q, pi
-        # the pi / p angle is at the center
-        center = (0, 0)
-        bottom_edge_ideal_point = (1, 0)
-        top_edge_ideal_point = (cos(pi / num_sides), sin(pi / num_sides))
+        # compute the vertices of the center polygon via reflection

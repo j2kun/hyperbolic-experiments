@@ -1,17 +1,11 @@
 from collections import deque
+from collections import namedtuple
 
 
-class TessellationConfiguration(object):
+class TessellationConfiguration(
+        namedtuple('TessellationConfiguration',
+            ['numPolygonSides', 'numPolygonsPerVertex'])):
     def __init__(self, numPolygonSides, numPolygonsPerVertex):
-        """Create a new configuration
-
-        :numPolygonSides: The number of sides of each polygon.
-        :numPolygonsPerVertex: The number of polygons touching each vertex.
-
-        """
-        self.numPolygonSides = numPolygonSides
-        self.numPolygonsPerVertex = numPolygonsPerVertex
-
         if not self.is_hyperbolic():
             raise Exception("Configuration {%s, %s} is not hyperbolic." %
                     (self.numPolygonSides, self.numPolygonsPerVertex))
