@@ -290,44 +290,61 @@ def draw_arc(dwg, lines, p1, p2, r, circle_center, id=None):
 
 
 def compute_fundamental_triangle(p, q):
-    center = Point(0, 0)
-    cos_p, sin_p = math.cos(math.pi / p), math.sin(math.pi / p)
+    """Compute the vertices of the triangle with the following properties:
 
-    """Desired point is b = (b_x, b_y). This point is on the line
-    y = (sin_p / cos_p) x and on an unknown circle C perpendicular to the unit
-    circle with center g = (g_x, 0).
+     - Vertex A lies at the origin.
+     - Vertex C lies on the x-axis.
+     - Vertex B is chosen so that angle CAB is pi / p, and (hyperbolic) angle
+       ABC is pi / q.
 
-    If a = (0, 0) and d = (d_x, 0) is the intersection of the line [ag] with C,
-    then we need (hyperbolic) angle abd to be pi / q.
+    Derivation:
 
-    This is the same as requiring that the tangent line to C at b forms an angle
-    of pi / q with the line between a and (cos_p, sin_p).
+    The desired point is B = (b_x, b_y). This point is on the line
+    L: y = tan(pi / p) x and on an unknown circle C perpendicular to the unit
+    circle with center G = (g_x, 0).
 
-    This tangent line has equation
+    If A = (0, 0) and D = (d_x, 0) is the intersection of the line [AG] with C,
+    then we need (hyperbolic) angle ABD to be pi / q. This is the same as
+    requiring that the tangent line to C at B forms an angle of pi / q with the
+    line between A and (cos(pi / q), sin(pi / q)), which has slope
+    tan(pi / p + pi / q).
 
-        y - b_y = m_b (x - b_x)    where m_b = -(b_x - g_x) / b_y
+    The slope of a tangent line to circle C at point B is given by
 
-    from the point b, the line is represented by the vector (1, m_b), and translating
-    that to the center (imagining) we see that the sum of angle dab and
-    (hyperbolic) angle abd is pi / p + pi / q, giving
+        y'(B) = -(b_x - g_x) / b_y
 
-        tan(pi / p + pi / q) = -m_b
+    Setting y'(B) = tan(pi / p + pi / q) and writing b_y in terms of b_x gives
 
-    Or equivalently, using the fact that b is on y = (sin_p / cos_p) x,
+        tan(pi / p + pi / q) tan(pi / p) = (G_x - b_x) / b_x
 
-        tan(pi / p + pi / q) (sin_p / cos_p) = (G_x - b_x) / b_x
+    Or, letting Z = tan(pi / p + pi / q) tan(pi / p),
+
+        b_x(Z + 1) = g.
+
+    Next, we use the fact that C and the unit circle are orthogonal to get a
+    relationship between their radii (pythagorean theorem):
+
+        1^2 + r^2 = g_x^2, where r^2 = (b_x - g_x)^2 + tan(pi / p)^2 b_x^2
+
+    substituting in g = b_x (Z + 1) and solving for b_x,
+
+        b_x = sqrt(1 / (1 + 2Z - (tan(pi / p))^2))
+
+    We can then solve for b_y, g, and d_x trivially.
     """
+    tan_p = math.tan(math.pi / p)
+    Z = math.tan(math.pi / p + math.pi / q) * tan_p
 
-    g_x = math.sqrt(2)
-    Z = math.tan(math.pi / p + math.pi / q) * sin_p / cos_p
-    b_x = g_x / (Z + 1)
-
-    b_y = b_x * (sin_p / cos_p)
-    b = Point(b_x, b_y)
-
+    b_x = math.sqrt(1 / (1 + 2 * Z - tan_p ** 2))
+    b_y = b_x * tan_p
+    g_x = b_x * (Z + 1)
     d_x = g_x - math.sqrt(b_y ** 2 + (b_x - g_x) ** 2)
 
-    return [center, b, Point(d_x, 0)]
+    A = Point(0, 0)
+    B = Point(b_x, b_y)
+    D = Point(d_x, 0)
+
+    return [A, B, D]
 
 
 
