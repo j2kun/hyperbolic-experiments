@@ -74,6 +74,7 @@ class PoincareDiskLine(Circle):
     that it can operate as if it were a Line for the purpose of
     tessellation.
     """
+
     def reflect(self, point):
         """Reflect a point across this line."""
         return self.invert_point(point)
@@ -92,5 +93,3 @@ class PoincareDiskModel(Circle):
             return PoincareDiskLine(
                 circle_through_points_perpendicular_to_circle(p1, p2, self),
                 self)
-
-

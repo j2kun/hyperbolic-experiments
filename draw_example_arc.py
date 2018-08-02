@@ -38,7 +38,7 @@ def run(name):
     dwg = svgwrite.Drawing(filename=name, debug=True)
     dwg.fill(color='white', opacity=0)
 
-    reference_circle = Circle((0,0), 1)
+    reference_circle = Circle((0, 0), 1)
     reference_circle = Circle(render(reference_circle.center), render(reference_circle.radius))
 
     boundary_circle = dwg.circle(
@@ -86,7 +86,6 @@ def draw_fundamental_triangle(name):
 
     triangle = dwg.add(dwg.g(id='triangle', stroke='red', stroke_width=4))
 
-
     for n in range(5, 11):
         z = math.cos(math.pi / n) ** 2 / math.sin(math.pi / n)
         y1 = -1 / z
@@ -98,18 +97,18 @@ def draw_fundamental_triangle(name):
         p2 = Point(x, y2)
 
         fundamental_triangle_side = circle_through_points_perpendicular_to_circle(
-                p1, p2, reference_circle)
+            p1, p2, reference_circle)
 
         # draw two diameters for the easy edges.
         triangle.add(
-                dwg.line(render((0, 0)), render((1, 0))))
+            dwg.line(render((0, 0)), render((1, 0))))
         triangle.add(
-                dwg.line(
-                    render((0, 0)),
-                    render((math.cos(math.pi / n), math.sin(math.pi / n)))))
+            dwg.line(
+                render((0, 0)),
+                render((math.cos(math.pi / n), math.sin(math.pi / n)))))
 
         draw_arc(dwg, triangle, p1, p2, fundamental_triangle_side.radius,
-                fundamental_triangle_side.center, id="triangle_side_n_{}".format(n))
+                 fundamental_triangle_side.center, id="triangle_side_n_{}".format(n))
 
     dwg.save()
 
@@ -149,15 +148,15 @@ def draw_and_rotate_fundamental_triangle_around_center(name):
     with the lines [(0, 0), (cos(pi/n), sin(pi/n))] and [(0, 0), (1, 0)].
     """
     triangle_side = circle_through_points_perpendicular_to_circle(
-            ideal1, ideal2, reference_circle)
+        ideal1, ideal2, reference_circle)
 
     top_intersection_points = triangle_side.intersect_with_line(
-            Line(Point(0, 0), math.sin(math.pi / n) / math.cos(math.pi / n)))
+        Line(Point(0, 0), math.sin(math.pi / n) / math.cos(math.pi / n)))
 
     p1 = min(top_intersection_points, key=lambda p: distance(p0, p))
 
     bottom_intersection_points = triangle_side.intersect_with_line(
-            Line(Point(0, 0), 0))
+        Line(Point(0, 0), 0))
 
     p2 = min(bottom_intersection_points, key=lambda p: distance(p0, p))
 
@@ -222,7 +221,7 @@ def reflect(points, index1, index2, reference_circle):
         return tuple(reflection_line.reflect(p) for p in points)
     else:
         fundamental_triangle_side = circle_through_points_perpendicular_to_circle(
-                p, q, reference_circle)
+            p, q, reference_circle)
         output = tuple(
             fundamental_triangle_side.invert_point(p) for p in points
         )
@@ -244,8 +243,8 @@ def draw_triangle(dwg, triangle, p1, p2, p3, disk_boundary):
                 p, q, disk_boundary)
 
             draw_arc(dwg, triangle, p, q,
-                    hyperbolic_line.radius,
-                    hyperbolic_line.center)
+                     hyperbolic_line.radius,
+                     hyperbolic_line.center)
 
 
 def draw_arc(dwg, lines, p1, p2, r, circle_center, id=None):
@@ -345,7 +344,6 @@ def compute_fundamental_triangle(p, q):
     D = Point(d_x, 0)
 
     return [A, B, D]
-
 
 
 if __name__ == '__main__':

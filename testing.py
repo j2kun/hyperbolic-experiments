@@ -21,4 +21,3 @@ def assert_iterables_are_close(s1, s2):
 
     for item in s2:
         assert_that(any(is_close(item, x) for x in s1)).is_true()
-

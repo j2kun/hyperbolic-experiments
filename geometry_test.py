@@ -140,7 +140,7 @@ def test_invert_in_circle_horizontal():
 
 
 def test_invert_in_circle_diagonal():
-    circle = Circle(center=Point(0 , 0), radius=2 ** 0.5)
+    circle = Circle(center=Point(0, 0), radius=2 ** 0.5)
     point = Point(2, 2)
     expected_inverse = Point(1/2, 1/2)
     actual_inverse = circle.invert_point(point)
@@ -169,9 +169,9 @@ def test_circle_through_points_diameter():
 def test_rotate_around_origin_pi_over_3():
     angle = math.pi / 3
     assert_are_close(Point(1 / 2, 3 ** 0.5 / 2),
-            rotate_around_origin(angle, (1, 0)))
+                     rotate_around_origin(angle, (1, 0)))
     assert_are_close(Point(-3 ** 0.5 / 2, 1/2),
-            rotate_around_origin(angle, (0, 1)))
+                     rotate_around_origin(angle, (0, 1)))
 
 
 def test_circle_through_points_with_points_on_circle():
@@ -207,19 +207,19 @@ def test_circle_intersect_with_vertical_line():
     line = VerticalLine.at_point(Point(math.cos(math.pi / 4), -1))
     circle = Circle(Point(0, 0), 1)
     assert_iterables_are_close(
-       circle.intersect_with_line(line),
-       set([
-           Point(math.cos(math.pi / 4), math.sin(math.pi / 4)),
-           Point(math.cos(math.pi / 4), -math.sin(math.pi / 4))
-       ]))
+        circle.intersect_with_line(line),
+        set([
+            Point(math.cos(math.pi / 4), math.sin(math.pi / 4)),
+            Point(math.cos(math.pi / 4), -math.sin(math.pi / 4))
+        ]))
 
 
 def test_circle_intersect_with_vertical_tangent():
     line = VerticalLine.at_point(Point(-1, -1))
     circle = Circle(Point(0, 0), 1)
     assert_iterables_are_close(
-       circle.intersect_with_line(line),
-       set([Point(-1, 0)]))
+        circle.intersect_with_line(line),
+        set([Point(-1, 0)]))
 
 
 def test_circle_intersect_with_vertical_line_empty():
@@ -232,10 +232,10 @@ def test_circle_intersect_with_line():
     line = Line(Point(-1, -1), 1)
     circle = Circle(Point(0, 0), 1)
     assert_iterables_are_close(
-       circle.intersect_with_line(line),
-       set([
-           Point(math.cos(math.pi / 4), math.sin(math.pi / 4)),
-           Point(-math.cos(math.pi / 4), -math.sin(math.pi / 4))
+        circle.intersect_with_line(line),
+        set([
+            Point(math.cos(math.pi / 4), math.sin(math.pi / 4)),
+            Point(-math.cos(math.pi / 4), -math.sin(math.pi / 4))
         ]))
 
 
@@ -244,8 +244,8 @@ def test_circle_intersect_with_line_tangent():
     line = Line(tangency_point + Point(-3, 3), -1)
     circle = Circle(Point(0, 0), 1)
     assert_iterables_are_close(
-       circle.intersect_with_line(line),
-       set([tangency_point]))
+        circle.intersect_with_line(line),
+        set([tangency_point]))
 
 
 def test_circle_intersect_with_line_empty():

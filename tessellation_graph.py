@@ -4,11 +4,11 @@ from collections import namedtuple
 
 class TessellationConfiguration(
         namedtuple('TessellationConfiguration',
-            ['numPolygonSides', 'numPolygonsPerVertex'])):
+                   ['numPolygonSides', 'numPolygonsPerVertex'])):
     def __init__(self, numPolygonSides, numPolygonsPerVertex):
         if not self.is_hyperbolic():
             raise Exception("Configuration {%s, %s} is not hyperbolic." %
-                    (self.numPolygonSides, self.numPolygonsPerVertex))
+                            (self.numPolygonSides, self.numPolygonsPerVertex))
 
     def is_hyperbolic(self):
         return (self.numPolygonSides - 2) * (self.numPolygonsPerVertex - 2) > 4
@@ -206,6 +206,7 @@ class Vertex(object):
     - "vertex": if it only meets the previous layer at a vertex, and hence
       there is no edge between this vertex and the previous layer.
     """
+
     def __init__(self, layer, index_in_layer):
         self.layer = layer
         self.index_in_layer = index_in_layer
@@ -242,6 +243,7 @@ class Edge(object):
 
     def contains(self, vertex):
         return vertex in self.incident_vertices
+
 
 '''
     def other(self, vertex):

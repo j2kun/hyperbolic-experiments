@@ -9,6 +9,7 @@ EPSILON = 1e-8
 
 class Point(namedtuple('Point', ['x', 'y'])):
     """A point class which doubles as a vector class."""
+
     def normalized(self):
         norm = math.sqrt(inner_product(self, self))
         return Point(self.x / norm, self.y / norm)
@@ -20,8 +21,8 @@ class Point(namedtuple('Point', ['x', 'y'])):
         signedLength = inner_product(self, normalized_w)
 
         return Point(
-                normalized_w.x * signedLength,
-                normalized_w.y * signedLength)
+            normalized_w.x * signedLength,
+            normalized_w.y * signedLength)
 
     def __add__(self, other):
         x, y = other
@@ -64,7 +65,7 @@ class Line:
 
         if self == line:
             raise ValueError("Can't intersect two identical lines; "
-                    "solution is not a single point.")
+                             "solution is not a single point.")
 
         if abs(self.slope) < EPSILON and abs(line.slope) < EPSILON:
             raise ValueError("Can't intersect two horizontal lines.")
@@ -73,7 +74,7 @@ class Line:
         x2, y2, slope2 = line.point.x, line.point.y, line.slope
 
         intersection_x = ((slope1 * x1 - slope2 * x2 + y2 - y1)
-            / (slope1 - slope2))
+                          / (slope1 - slope2))
         intersection_y = y1 + slope1 * (intersection_x - x1)
 
         return Point(intersection_x, intersection_y)
@@ -98,7 +99,7 @@ class Line:
     def __eq__(self, other):
         if not isinstance(other, Line):
             raise TypeError("equality check against thing which is not "
-                "a line: {}".format(other))
+                            "a line: {}".format(other))
 
         if isinstance(other, VerticalLine):
             return other.__eq__(self)
@@ -131,7 +132,7 @@ class VerticalLine(Line):
         return VerticalLine.at_point(Point(x_value, 0))
 
     def y_value(self, x_value):
-        raise TypeError("VerticalLine does not support y_value");
+        raise TypeError("VerticalLine does not support y_value")
 
     def reflect(self, point):
         """Reflect a point across this line."""
@@ -145,7 +146,7 @@ class VerticalLine(Line):
         """
         if isinstance(line, VerticalLine):
             raise ValueError("Can't intersect two vertical lines; "
-                    "solution is either empty or not a point.")
+                             "solution is either empty or not a point.")
 
         return Point(self.point.x, line.y_value(self.point.x))
 
@@ -217,9 +218,9 @@ class Circle(namedtuple('Circle', ['center', 'radius'])):
         else:
             A = line.slope ** 2 + 1
             B = 2 * (line.slope * line.point.y
-                    - line.slope * self.center.y
-                    - self.center.x
-                    - line.slope ** 2 * line.point.x)
+                     - line.slope * self.center.y
+                     - self.center.x
+                     - line.slope ** 2 * line.point.x)
             C = (
                 self.center.x ** 2
                 + line.slope ** 2 * line.point.x ** 2
@@ -257,8 +258,8 @@ def det3(A):
 
     return (
         A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1])
-      - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
-      + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0])
+        - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0])
+        + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0])
     )
 
 
@@ -336,7 +337,7 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
     detminor_1_1 = det3(remove_column(M, 0))
     if abs(detminor_1_1) < EPSILON:
         raise ValueError("input points {} {} lie on a line with the "
-            "center of the circle {}".format(point1, point2, circle))
+                         "center of the circle {}".format(point1, point2, circle))
 
     # detminor stands for "determinant of (matrix) minor"
     detminor_1_2 = det3(remove_column(M, 1))
@@ -347,8 +348,8 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
     circle_center_y = -0.5 * detminor_1_3 / detminor_1_1
     circle_radius = (
         circle_center_x ** 2
-      + circle_center_y ** 2
-      + detminor_1_4 / detminor_1_1
+        + circle_center_y ** 2
+        + detminor_1_4 / detminor_1_1
     ) ** 0.5
 
     return Circle(Point(circle_center_x, circle_center_y), circle_radius)
