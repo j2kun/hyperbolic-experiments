@@ -64,6 +64,31 @@ def compute_fundamental_triangle(tessellation_configuration):
     return [A, B, D]
 
 
+class PoincareDiskLine(Circle):
+    """A representation of a Line in the Poincare disk. Implements reflect so
+    that it can operate as if it were a Line for the purpose of
+    tessellation.
+    """
+    def reflect(self, point):
+        """Reflect a point across this line."""
+        return self.invert_point(point)
+
+
+class PoincareDiskModel(Circle):
+    def line_through(p1, p2):
+        """Return a PoincareDiskLine through the two given points.
+
+        If the two points are collinear with the center of the underlying
+        Poincare disk model, return a Line or a VerticalLine, as appropriate.
+        """
+        if orientation(p1, p2, self.center) == 'collinear':
+            return Line.through(p1, p2)
+        else:
+            return PoincareDiskLine(
+                circle_through_points_perpendicular_to_circle(p1, p2, self),
+                self)
+
+
 class HyperbolicTessellation(object):
 
     """A class representing a tessellation in the Poincare disk model.
