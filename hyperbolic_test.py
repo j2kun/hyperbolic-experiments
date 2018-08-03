@@ -12,4 +12,7 @@ def test_fundamental_triangle():
     center, pi_over_q_vertex, x_axis_vertex = compute_fundamental_triangle(config)
     assert_that(center).is_equal_to(Point(0, 0))
     assert_iterables_are_close(x_axis_vertex, Point(math.sqrt(2) - 1, 0))
-    assert_iterables_are_close(pi_over_q_vertex, Point(x=0.44828773608402694, y=0.2588190451025208))
+
+    b_x = 0.5 * math.sqrt(6 - 3 * math.sqrt(3))
+    b_y = 0.5 * math.sqrt(2 - math.sqrt(3))
+    assert_iterables_are_close(pi_over_q_vertex, Point(x=b_x, y=b_y))

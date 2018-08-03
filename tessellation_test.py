@@ -27,9 +27,12 @@ def test_center_polygon():
     config = TessellationConfiguration(6, 4)
     tessellation = HyperbolicTessellation(config)
 
-    starting_vertex = Point(x=0.44828773608, y=0.258819045102)
+    b_x = 0.5 * math.sqrt(6 - 3 * math.sqrt(3))
+    b_y = 0.5 * math.sqrt(2 - math.sqrt(3))
+    starting_vertex = Point(x=b_x, y=b_y)
+
     vertices = [
-        rotate_around_origin(k * math.pi / 6, starting_vertex)
+        rotate_around_origin(k * math.pi / 3, starting_vertex)
         for k in range(6)
     ]
 

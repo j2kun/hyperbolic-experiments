@@ -49,7 +49,7 @@ class HyperbolicTessellation(object):
         p1, p2 = top_vertex, x_axis_vertex
         for i in range(p):
             p2 = self.disk_model.line_through(center, p1).reflect(p2)
-            polygon.append(p2)
             p1 = self.disk_model.line_through(center, p2).reflect(p1)
+            polygon.append(p1)
 
         return polygon
