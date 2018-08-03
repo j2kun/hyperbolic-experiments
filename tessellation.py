@@ -10,6 +10,16 @@ from hyperbolic import PoincareDiskModel
 from hyperbolic import compute_fundamental_triangle
 
 
+EPSILON = 1e-6
+
+
+def are_close(points1, points2):
+    for p1, p2 in zip(sorted(points1), sorted(points2)):
+        if (p1 - p2).norm() > EPSILON:
+            return False
+    return True
+
+
 class TessellationConfiguration(
         namedtuple('TessellationConfiguration',
                    ['numPolygonSides', 'numPolygonsPerVertex'])):
@@ -50,7 +60,7 @@ class HyperbolicTessellation(object):
         polygon = [top_vertex]
 
         p1, p2 = top_vertex, x_axis_vertex
-        for i in range(p):
+        for i in range(p - 1):
             p2 = self.disk_model.line_through(center, p1).reflect(p2)
             p1 = self.disk_model.line_through(center, p2).reflect(p1)
             polygon.append(p1)
@@ -78,7 +88,10 @@ class HyperbolicTessellation(object):
             processed.append(sorted(points))
 
         def is_in_processed(points):
-            pass
+            for p in processed:
+                if are_close(set(p), set(points)):
+                    return True
+            return False
 
         while queue:
             polygon = queue.pop()

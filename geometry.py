@@ -10,13 +10,15 @@ EPSILON = 1e-8
 class Point(namedtuple('Point', ['x', 'y'])):
     """A point class which doubles as a vector class."""
 
+    def norm(self):
+        return math.sqrt(inner_product(self, self))
+
     def normalized(self):
-        norm = math.sqrt(inner_product(self, self))
+        norm = self.norm()
         return Point(self.x / norm, self.y / norm)
 
     def project(self, w):
         """Project self onto the input vector w."""
-        norm_w = math.sqrt(inner_product(w, w))
         normalized_w = w.normalized()
         signedLength = inner_product(self, normalized_w)
 
@@ -37,6 +39,12 @@ class Point(namedtuple('Point', ['x', 'y'])):
 
     def is_close_to(self, other):
         return (self - other).is_zero()
+
+    def __str__(self):
+        return 'Point(x={:.2f}, y={:.2f})'.format(self.x, self.y)
+
+    def __repr__(self):
+        return str(self)
 
 
 def inner_product(v, w):
