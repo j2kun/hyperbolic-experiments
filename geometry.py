@@ -98,8 +98,7 @@ class Line:
 
     def __eq__(self, other):
         if not isinstance(other, Line):
-            raise TypeError("equality check against thing which is not "
-                            "a line: {}".format(other))
+            return False
 
         if isinstance(other, VerticalLine):
             return other.__eq__(self)
@@ -109,7 +108,7 @@ class Line:
             and self.contains(other.point)
         )
 
-    def __neq__(self, other):
+    def __ne__(self, other):
         return not self.__eq__(other)
 
     def __str__(self):
@@ -125,11 +124,6 @@ class VerticalLine(Line):
     def at_point(point):
         """Return a VerticalLine instance based at the given point."""
         return VerticalLine(Point(point.x, 0), "vertical")
-
-    @staticmethod
-    def at(x_value):
-        """Return a VerticalLine represented by the equation x = x_value."""
-        return VerticalLine.at_point(Point(x_value, 0))
 
     def y_value(self, x_value):
         raise TypeError("VerticalLine does not support y_value")
@@ -170,7 +164,7 @@ class Circle(namedtuple('Circle', ['center', 'radius'])):
     def tangent_at(self, point):
         """Compute the tangent line to a circle at a point.
 
-        Raise an Exception if the point is not on the circle.
+        Raise an ValueError if the point is not on the circle.
         """
         if not self.contains(point):
             raise ValueError("Point is not on circle")
@@ -182,13 +176,17 @@ class Circle(namedtuple('Circle', ['center', 'radius'])):
         return Line(point, slope)
 
     def invert_point(self, point):
-        """Compute the inverse of a point with respect to a self."""
+        """Compute the inverse of a point with respect to a self.
+
+        Raises a ValueError if the point to be inverted is the center
+        of the circle.
+        """
         x, y = point
         center, radius = (self.center, self.radius)
         square_norm = (x - center.x) ** 2 + (y - center.y) ** 2
 
         if abs(square_norm) < EPSILON:
-            raise Exception(
+            raise ValueError(
                 "Can't invert the center of a circle in that same circle.")
 
         x_inverted = center.x + radius ** 2 * (x - center.x) / square_norm
@@ -254,7 +252,7 @@ def distance(p1, p2):
 def det3(A):
     """Compute the determinant of a 3x3 matrix"""
     if not (len(A) == 3 and len(A[0]) == 3):
-        raise Exception("Bad matrix dims")
+        raise ValueError("Bad matrix dims")
 
     return (
         A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1])
@@ -300,7 +298,7 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
 
     (1) If the two points and the center of the input circle lie on a common
     line, then the hyperbolic line is a diameter of the circle. This function
-    raises an Exception in this case.
+    raises a ValueError in this case.
 
     (2) If the input points lie on the circle, then the inversion is a no-op.
     In this case we can compute the center of the desired circle as the point

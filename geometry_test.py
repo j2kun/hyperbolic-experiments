@@ -29,6 +29,8 @@ def test_line_neq():
     line2 = Line(Point(0, -2), slope=2.1)
     assert_that(line1 != line2).is_true()
     assert_that(line2 != line1).is_true()
+    assert_that(line2 != 7).is_true()
+    assert_that(line2 != 7).is_true()
 
 
 def test_vertical_line_eq():
@@ -49,7 +51,14 @@ def test_vertical_line_neq_line():
     line1 = VerticalLine.at_point(Point(2, 5))
     line2 = Line(Point(2, 5), slope=1)
     assert_that(line1 != line2).is_true()
-    assert_that(line2 != line1).is_true()
+    assert_that(line2.__ne__(line1)).is_true()
+
+
+def test_vertical_line_str():
+    line = Line(Point(2, 5), slope=1)
+    assert_that(str(line)).is_equal_to(
+            "Line(point={}, slope=1)".format(line.point))
+    assert_that(repr(line)).is_equal_to(str(line))
 
 
 def test_line_intersect_with():
@@ -145,6 +154,13 @@ def test_invert_in_circle_diagonal():
     expected_inverse = Point(1/2, 1/2)
     actual_inverse = circle.invert_point(point)
     assert_are_close(actual_inverse, expected_inverse)
+
+
+def test_invert_in_circle_center():
+    circle = Circle(center=Point(1, 2), radius=2 ** 0.5)
+    point = Point(1, 2)
+    with pytest.raises(ValueError):
+        circle.invert_point(point)
 
 
 def test_circle_through_points_unit_circle():
@@ -289,3 +305,8 @@ def test_orientation_collinear():
     p2 = Point(2, 4)
     p3 = Point(3, 6)
     assert_that(orientation(p1, p2, p3)).is_equal_to("collinear")
+
+
+def test_det3_error():
+    with pytest.raises(ValueError):
+        det3([])
