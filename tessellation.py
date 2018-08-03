@@ -2,8 +2,10 @@
 Poincare disk by uniform, regular polygons.
 """
 
+from collections import deque
 from collections import namedtuple
 from geometry import Point
+from geometry import bounding_box_area
 from hyperbolic import PoincareDiskModel
 from hyperbolic import compute_fundamental_triangle
 
@@ -34,6 +36,7 @@ class HyperbolicTessellation(object):
 
         # compute the vertices of the center polygon via reflection
         self.center_polygon = self.compute_center_polygon()
+        self.tessellated_polygons = self.tessellate()
 
     def compute_center_polygon(self):
         center, top_vertex, x_axis_vertex = compute_fundamental_triangle(
@@ -53,3 +56,47 @@ class HyperbolicTessellation(object):
             polygon.append(p1)
 
         return polygon
+
+    def tessellate(self, min_area=1e-3):
+        """Return the set of polygons that make up a tessellation of the center
+        polygon. Keep reflecting polygons until the Euclidean bounding box of all
+        polygons is less than the given threshold.
+        """
+        queue = deque()
+        queue.append(self.center_polygon)
+        tessellated_polygons = []
+
+        """When determining if a polygon has been visited, the order of its vertices
+        is irrelevant, so we sort them before adding them to processed.
+
+        Moreover, due to the floating point precision, the entire set of processed
+        vertices has to be checked for nearness.
+        """
+        processed = []
+
+        def add_to_processed(points):
+            processed.append(sorted(points))
+
+        def is_in_processed(points):
+            pass
+
+        while queue:
+            polygon = queue.pop()
+            if bounding_box_area(polygon) < min_area:
+                add_to_processed(polygon)
+                continue
+
+            if is_in_processed(polygon):
+                continue
+
+            edges = [(polygon[i], polygon[(i + 1) % len(polygon)])
+                     for i in range(len(polygon))]
+            for u, v in edges:
+                line = self.disk_model.line_through(u, v)
+                reflected_polygon = [line.reflect(p) for p in polygon]
+                queue.append(reflected_polygon)
+
+            tessellated_polygons.append(polygon)
+            add_to_processed(polygon)
+
+        return tessellated_polygons

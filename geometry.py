@@ -374,3 +374,12 @@ def intersection_of_common_tangents(circle, point1, point2):
     line1 = circle.tangent_at(point1)
     line2 = circle.tangent_at(point2)
     return line1.intersect_with(line2)
+
+
+def bounding_box_area(points):
+    max_x = max(p.x for p in points)
+    max_y = max(p.y for p in points)
+    min_x = min(p.x for p in points)
+    min_y = min(p.y for p in points)
+
+    return (max_y - min_y) * (max_x - min_x)
