@@ -3,7 +3,9 @@ geometry.
 """
 
 from geometry import Circle
+from geometry import Line
 from geometry import Point
+from geometry import orientation
 import math
 
 
@@ -81,7 +83,7 @@ class PoincareDiskLine(Circle):
 
 
 class PoincareDiskModel(Circle):
-    def line_through(p1, p2):
+    def line_through(self, p1, p2):
         """Return a PoincareDiskLine through the two given points.
 
         If the two points are collinear with the center of the underlying

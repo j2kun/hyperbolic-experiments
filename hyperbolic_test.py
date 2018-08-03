@@ -1,6 +1,5 @@
 from assertpy import assert_that
 from geometry import Point
-from tessellation_graph import TessellationConfiguration
 import itertools
 import math
 

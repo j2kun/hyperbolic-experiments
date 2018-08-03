@@ -1,17 +1,4 @@
 from collections import deque
-from collections import namedtuple
-
-
-class TessellationConfiguration(
-        namedtuple('TessellationConfiguration',
-                   ['numPolygonSides', 'numPolygonsPerVertex'])):
-    def __init__(self, numPolygonSides, numPolygonsPerVertex):
-        if not self.is_hyperbolic():
-            raise Exception("Configuration {%s, %s} is not hyperbolic." %
-                            (self.numPolygonSides, self.numPolygonsPerVertex))
-
-    def is_hyperbolic(self):
-        return (self.numPolygonSides - 2) * (self.numPolygonsPerVertex - 2) > 4
 
 
 class TessellationGraph(object):

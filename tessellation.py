@@ -2,8 +2,22 @@
 Poincare disk by uniform, regular polygons.
 """
 
+from collections import namedtuple
+from geometry import Point
 from hyperbolic import PoincareDiskModel
 from hyperbolic import compute_fundamental_triangle
+
+
+class TessellationConfiguration(
+        namedtuple('TessellationConfiguration',
+                   ['numPolygonSides', 'numPolygonsPerVertex'])):
+    def __init__(self, numPolygonSides, numPolygonsPerVertex):
+        if not self.is_hyperbolic():
+            raise Exception("Configuration {%s, %s} is not hyperbolic." %
+                            (self.numPolygonSides, self.numPolygonsPerVertex))
+
+    def is_hyperbolic(self):
+        return (self.numPolygonSides - 2) * (self.numPolygonsPerVertex - 2) > 4
 
 
 class HyperbolicTessellation(object):
@@ -18,12 +32,12 @@ class HyperbolicTessellation(object):
         self.configuration = configuration
         self.disk_model = PoincareDiskModel(Point(0, 0), radius=1)
 
-        center, top_vertex, x_axis_vertex = compute_fundamental_triangle(configuration)
-
         # compute the vertices of the center polygon via reflection
-        self.center_polygon = self.compute_center_polygon(center, top_vertex, x_axis_vertex)
+        self.center_polygon = self.compute_center_polygon()
 
-    def compute_center_polygon(self, center, top_vertex, x_axis_vertex):
+    def compute_center_polygon(self):
+        center, top_vertex, x_axis_vertex = compute_fundamental_triangle(
+            self.configuration)
         p = self.configuration.numPolygonSides
 
         """The center polygon's first vertex is the top vertex (the one that
@@ -38,5 +52,4 @@ class HyperbolicTessellation(object):
             polygon.append(p2)
             p1 = self.disk_model.line_through(center, p2).reflect(p1)
 
-        assert len(polygon) == p
-        return p
+        return polygon

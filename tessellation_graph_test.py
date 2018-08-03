@@ -1,21 +1,7 @@
 import itertools
 
+from tessellation import TessellationConfiguration
 from tessellation_graph import *
-
-
-def test_valid_configuration():
-    TessellationConfiguration(6, 4)
-    TessellationConfiguration(4, 5)
-    TessellationConfiguration(7, 3)
-    TessellationConfiguration(3, 7)
-
-
-def test_invalid_configuration():
-    try:
-        TessellationConfiguration(4, 4)
-        assert False
-    except Exception:
-        pass
 
 
 def assert_edges_are_exactly(graph, edges):
