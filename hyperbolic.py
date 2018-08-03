@@ -6,6 +6,7 @@ from geometry import Circle
 from geometry import Line
 from geometry import Point
 from geometry import orientation
+from geometry import circle_through_points_perpendicular_to_circle
 import math
 
 
@@ -92,6 +93,5 @@ class PoincareDiskModel(Circle):
         if orientation(p1, p2, self.center) == 'collinear':
             return Line.through(p1, p2)
         else:
-            return PoincareDiskLine(
-                circle_through_points_perpendicular_to_circle(p1, p2, self),
-                self)
+            circle = circle_through_points_perpendicular_to_circle(p1, p2, self)
+            return PoincareDiskLine(circle.center, circle.radius)
