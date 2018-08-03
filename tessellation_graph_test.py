@@ -166,7 +166,7 @@ def test_four_layer_tessellation_graph_3_7():
     )
 
     for vertex in graph.vertices:
-        print(vertex)
+        print(repr(vertex))
         for edge in vertex.edges:
             print(edge)
         print()

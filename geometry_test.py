@@ -191,6 +191,20 @@ def test_circle_through_points_with_points_on_circle():
     assert_are_close(expected_circle.radius, actual_circle.radius)
 
 
+def test_circle_through_points_with_one_point_on_circle():
+    reference_circle = Circle(Point(0, 0), 1)
+    p1 = Point(1/2, 1/2)
+    p2 = Point(2/3, - math.sqrt(5) / 3)
+
+    expected_circle = Circle(Point(3/2, 0), (5/4) ** 0.5)
+    actual_circle = circle_through_points_perpendicular_to_circle(p1, p2, reference_circle)
+    assert_are_close(expected_circle.center, actual_circle.center)
+    assert_are_close(expected_circle.radius, actual_circle.radius)
+    actual_circle = circle_through_points_perpendicular_to_circle(p2, p1, reference_circle)
+    assert_are_close(expected_circle.center, actual_circle.center)
+    assert_are_close(expected_circle.radius, actual_circle.radius)
+
+
 def test_reflect_increasing_slope():
     line = Line(Point(0, 0), 1)
     assert_are_close(line.reflect(Point(2, -2)), Point(-2, 2))
@@ -253,3 +267,25 @@ def test_circle_intersect_with_line_empty():
     line = Line(tangency_point + Point(-3, 7), -2)
     circle = Circle(Point(0, 0), 1)
     assert_that(circle.intersect_with_line(line)).is_empty()
+
+
+def test_orientation_counterclockwise():
+    p1 = Point(1, 1)
+    p2 = Point(2, 2)
+    p3 = Point(1.5, 3)
+    assert_that(orientation(p1, p2, p3)).is_equal_to("counterclockwise")
+    assert_that(orientation(p1, p2, p3)).is_equal_to("counterclockwise")
+
+
+def test_orientation_clockwise():
+    p1 = Point(1, 1)
+    p2 = Point(2, 2)
+    p3 = Point(3, 1.5)
+    assert_that(orientation(p1, p2, p3)).is_equal_to("clockwise")
+
+
+def test_orientation_collinear():
+    p1 = Point(1, 2)
+    p2 = Point(2, 4)
+    p3 = Point(3, 6)
+    assert_that(orientation(p1, p2, p3)).is_equal_to("collinear")
