@@ -6,4 +6,4 @@ pluggy==0.7.1
 py==1.5.4
 pytest==3.7.1
 six==1.11.0
--e git+git@github.com:j2kun/svgwrite.git@0be16b36068c2f2095575311f5b05ac91e43bff2#egg=svgwrite
+git+git://github.com/j2kun/svgwrite.git@e2948bb8b922e64c8d8e0c1c4c66bb1f1a34d197#egg=svgwrite
