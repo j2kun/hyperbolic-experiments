@@ -83,7 +83,7 @@ class HyperbolicTessellation(object):
     arcs of circles perpendicular to the boundary of the disk.
     """
 
-    def __init__(self, configuration, min_area=1e-4):
+    def __init__(self, configuration, min_area=6e-4):
         self.configuration=configuration
         self.disk_model=PoincareDiskModel(Point(0, 0), radius=1)
 
@@ -201,6 +201,13 @@ class HyperbolicTessellation(object):
 
 
 if __name__ == "__main__":
-    config=TessellationConfiguration(6, 4)
-    tessellation=HyperbolicTessellation(config)
-    tessellation.render(filename="tessellation_6_4.svg", canvas_width=500)
+    for p in range(3, 8):
+        for q in range(3, 8):
+            if (p - 2) * (q - 2) > 4:
+                print(p, q)
+                try:
+                    config=TessellationConfiguration(p, q)
+                    tessellation=HyperbolicTessellation(config)
+                    tessellation.render(filename="svg/tessellation_{}_{}.svg".format(p, q), canvas_width=500)
+                except:
+                    pass
