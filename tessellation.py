@@ -8,6 +8,7 @@ from geometry import Point
 from geometry import bounding_box_area
 from hyperbolic import PoincareDiskModel
 from hyperbolic import compute_fundamental_triangle
+import svgwrite
 
 
 EPSILON = 1e-6
@@ -89,7 +90,7 @@ class HyperbolicTessellation(object):
 
         def is_in_processed(points):
             for p in processed:
-                if are_close(set(p), set(points)):
+                if are_close(p, points):
                     return True
             return False
 
@@ -113,3 +114,86 @@ class HyperbolicTessellation(object):
             add_to_processed(polygon)
 
         return tessellated_polygons
+
+    def render(self, filename, canvas_width):
+        """Output an svg file drawing the tessellation."""
+        canvas_center = Point(canvas_width / 2, canvas_width / 2)
+
+        def in_rendered_coords(p):
+            if isinstance(p, Point):
+                scaled_and_reflected = Point(p.x, -p.y) * canvas_width
+                return canvas_center + scaled_and_reflected
+            else:
+                return p * canvas_width
+
+        dwg = svgwrite.Drawing(filename=filename, debug=True)
+        dwg.fill(color='white', opacity=0)
+        boundary_circle = dwg.circle(
+            center=in_rendered_coords(self.disk_model.center),
+            r=in_rendered_coords(self.disk_model.radius),
+            id='boundary_circle',
+            stroke='black',
+            stroke_width=1)
+        boundary_circle.fill(color='white', opacity=0)
+        dwg.add(boundary_circle)
+
+        polygon_group = dwg.add(dwg.g(id='polygons', stroke='blue', stroke_width=1))
+        for polygon in self.tessellated_polygons:
+            self.render_polygon(polygon, dwg, polygon_group)
+
+        dwg.save()
+
+    def render_polygon(self, polygon, dwg, group):
+        arcs_group = group.add(dwg.g())
+
+        edges = [(polygon[i], polygon[(i + 1) % len(polygon)])
+                 for i in range(len(polygon))]
+
+        for (p, q) in edges:
+            line = self.disk_model.line_through(p, q)
+            if isinstance(line, PoincareDiskLine):
+                render_arc(dwg, arcs_group, line, p, q)
+            else:
+                line = dwg.line(render(p), render(q))
+                arcs_group.add(line)
+
+    def render_arc(self, dwg, group, line, from_point, to_point):
+        use_positive_angle_dir = orientation(
+            from_point, to_point, self.disk_model.center) == 'clockwise'
+
+        """
+        Claim: Let x, y, be the start and end of the hyperbolic line segment,
+        and c the center of the circle this line segment is a part of. Then we
+        should use angle_dir='+' if and only if the sequence (x, y, c) makes a
+        clockwise turn. Note this is in the coordinates with a flipped y-axis from
+        the standard coordinates.
+        """
+
+        p1 = render(p1)
+        p2 = render(p2)
+        r = render(r)
+        circle_center = render(circle_center)
+
+        if id:
+            path = dwg.path('m', id=id)
+        else:
+            path = dwg.path('m')
+
+        path.push(p1)
+        path.push_arc(
+            target=p2,
+            rotation=0,
+            r=r,
+            large_arc=False,
+            angle_dir='+' if use_positive_angle_dir else '-',
+            absolute=True)
+
+        """ Uncomment to see the circle containing this arc
+        dwg.add(dwg.circle(
+            center=circle_center,
+            r=r,
+            stroke='green',
+            stroke_width=1))
+        """
+
+        lines.add(path)

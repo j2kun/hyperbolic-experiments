@@ -1,4 +1,3 @@
-from svgwrite import cm, mm
 import math
 import svgwrite
 
