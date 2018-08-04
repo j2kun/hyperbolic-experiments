@@ -5,20 +5,13 @@ Poincare disk by uniform, regular polygons.
 from collections import deque
 from collections import namedtuple
 from geometry import Point
+from geometry import are_close
 from geometry import bounding_box_area
+from geometry import orientation
+from hyperbolic import PoincareDiskLine
 from hyperbolic import PoincareDiskModel
 from hyperbolic import compute_fundamental_triangle
 import svgwrite
-
-
-EPSILON = 1e-6
-
-
-def are_close(points1, points2):
-    for p1, p2 in zip(sorted(points1), sorted(points2)):
-        if (p1 - p2).norm() > EPSILON:
-            return False
-    return True
 
 
 class TessellationConfiguration(
@@ -33,21 +26,59 @@ class TessellationConfiguration(
         return (self.numPolygonSides - 2) * (self.numPolygonsPerVertex - 2) > 4
 
 
-class HyperbolicTessellation(object):
+class PolygonSet(list):
+    """A helper class wrapping a set of polygons, that implements special
+    checks for membership and addition.
 
+    When determining if a polygon has been visited, the order of its vertices
+    is irrelevant, so we sort them before adding them to processed.
+
+    Moreover, due to the floating point precision, the entire set of processed
+    vertices has to be checked for nearness.
+    """
+
+    def add_polygon(self, points):
+        self.append(sorted(points))
+
+    def contains_polygon(self, points):
+        for p in self:
+            if are_close(p, points):
+                return True
+        return False
+
+
+class RenderedCoords:
+    """A helper class to keep track of a transformation from the unit circle to
+    a rendered image.
+    """
+
+    def __init__(self, canvas_width):
+        self.canvas_width = canvas_width
+        self.canvas_center = Point(canvas_width / 2, canvas_width / 2)
+        self.scaling_factor = self.canvas_width / 2
+
+    def in_rendered_coords(self, p):
+        if isinstance(p, Point):
+            scaled_and_reflected = Point(p.x, -p.y) * self.scaling_factor
+            return self.canvas_center + scaled_and_reflected
+        else:
+            return p * self.scaling_factor
+
+
+class HyperbolicTessellation(object):
     """A class representing a tessellation in the Poincare disk model.
 
     The model consists of the interior of a unit disk in the plane. Lines are
     arcs of circles perpendicular to the boundary of the disk.
     """
 
-    def __init__(self, configuration):
+    def __init__(self, configuration, min_area=1e-3):
         self.configuration = configuration
         self.disk_model = PoincareDiskModel(Point(0, 0), radius=1)
 
         # compute the vertices of the center polygon via reflection
         self.center_polygon = self.compute_center_polygon()
-        self.tessellated_polygons = self.tessellate()
+        self.tessellated_polygons = self.tessellate(min_area=min_area)
 
     def compute_center_polygon(self):
         center, top_vertex, x_axis_vertex = compute_fundamental_triangle(
@@ -76,31 +107,15 @@ class HyperbolicTessellation(object):
         queue = deque()
         queue.append(self.center_polygon)
         tessellated_polygons = []
-
-        """When determining if a polygon has been visited, the order of its vertices
-        is irrelevant, so we sort them before adding them to processed.
-
-        Moreover, due to the floating point precision, the entire set of processed
-        vertices has to be checked for nearness.
-        """
-        processed = []
-
-        def add_to_processed(points):
-            processed.append(sorted(points))
-
-        def is_in_processed(points):
-            for p in processed:
-                if are_close(p, points):
-                    return True
-            return False
+        processed = PolygonSet()
 
         while queue:
             polygon = queue.pop()
             if bounding_box_area(polygon) < min_area:
-                add_to_processed(polygon)
+                processed.add_polygon(polygon)
                 continue
 
-            if is_in_processed(polygon):
+            if processed.contains_polygon(polygon):
                 continue
 
             edges = [(polygon[i], polygon[(i + 1) % len(polygon)])
@@ -111,40 +126,33 @@ class HyperbolicTessellation(object):
                 queue.append(reflected_polygon)
 
             tessellated_polygons.append(polygon)
-            add_to_processed(polygon)
+            processed.add_polygon(polygon)
 
         return tessellated_polygons
 
     def render(self, filename, canvas_width):
         """Output an svg file drawing the tessellation."""
-        canvas_center = Point(canvas_width / 2, canvas_width / 2)
+        self.transformer = RenderedCoords(canvas_width)
+        self.dwg = svgwrite.Drawing(filename=filename, debug=True)
 
-        def in_rendered_coords(p):
-            if isinstance(p, Point):
-                scaled_and_reflected = Point(p.x, -p.y) * canvas_width
-                return canvas_center + scaled_and_reflected
-            else:
-                return p * canvas_width
-
-        dwg = svgwrite.Drawing(filename=filename, debug=True)
-        dwg.fill(color='white', opacity=0)
-        boundary_circle = dwg.circle(
-            center=in_rendered_coords(self.disk_model.center),
-            r=in_rendered_coords(self.disk_model.radius),
+        self.dwg.fill(color='white', opacity=0)
+        boundary_circle = self.dwg.circle(
+            center=self.transformer.in_rendered_coords(self.disk_model.center),
+            r=self.transformer.in_rendered_coords(self.disk_model.radius),
             id='boundary_circle',
             stroke='black',
             stroke_width=1)
         boundary_circle.fill(color='white', opacity=0)
-        dwg.add(boundary_circle)
+        self.dwg.add(boundary_circle)
 
-        polygon_group = dwg.add(dwg.g(id='polygons', stroke='blue', stroke_width=1))
+        polygon_group = self.dwg.add(self.dwg.g(id='polygons', stroke='blue', stroke_width=1))
         for polygon in self.tessellated_polygons:
-            self.render_polygon(polygon, dwg, polygon_group)
+            self.render_polygon(polygon, polygon_group)
 
-        dwg.save()
+        self.dwg.save()
 
-    def render_polygon(self, polygon, dwg, group):
-        arcs_group = group.add(dwg.g())
+    def render_polygon(self, polygon, group):
+        arcs_group = group.add(self.dwg.g())
 
         edges = [(polygon[i], polygon[(i + 1) % len(polygon)])
                  for i in range(len(polygon))]
@@ -152,32 +160,22 @@ class HyperbolicTessellation(object):
         for (p, q) in edges:
             line = self.disk_model.line_through(p, q)
             if isinstance(line, PoincareDiskLine):
-                render_arc(dwg, arcs_group, line, p, q)
+                self.render_arc(arcs_group, line, p, q)
             else:
-                line = dwg.line(render(p), render(q))
+                line = self.dwg.line(
+                    self.transformer.in_rendered_coords(p),
+                    self.transformer.in_rendered_coords(q))
                 arcs_group.add(line)
 
-    def render_arc(self, dwg, group, line, from_point, to_point):
+    def render_arc(self, group, line, from_point, to_point):
         use_positive_angle_dir = orientation(
-            from_point, to_point, self.disk_model.center) == 'clockwise'
+            from_point, to_point, self.disk_model.center) == 'counterclockwise'
 
-        """
-        Claim: Let x, y, be the start and end of the hyperbolic line segment,
-        and c the center of the circle this line segment is a part of. Then we
-        should use angle_dir='+' if and only if the sequence (x, y, c) makes a
-        clockwise turn. Note this is in the coordinates with a flipped y-axis from
-        the standard coordinates.
-        """
-
-        p1 = render(p1)
-        p2 = render(p2)
-        r = render(r)
-        circle_center = render(circle_center)
-
-        if id:
-            path = dwg.path('m', id=id)
-        else:
-            path = dwg.path('m')
+        p1 = self.transformer.in_rendered_coords(from_point)
+        p2 = self.transformer.in_rendered_coords(to_point)
+        r = self.transformer.in_rendered_coords(line.radius)
+        circle_center = self.transformer.in_rendered_coords(line.center)
+        path = self.dwg.path('m')
 
         path.push(p1)
         path.push_arc(
@@ -188,12 +186,10 @@ class HyperbolicTessellation(object):
             angle_dir='+' if use_positive_angle_dir else '-',
             absolute=True)
 
-        """ Uncomment to see the circle containing this arc
-        dwg.add(dwg.circle(
-            center=circle_center,
-            r=r,
-            stroke='green',
-            stroke_width=1))
-        """
+        group.add(path)
 
-        lines.add(path)
+
+if __name__ == "__main__":
+    config = TessellationConfiguration(6, 4)
+    tessellation = HyperbolicTessellation(config)
+    tessellation.render(filename="tessellation_6_4.svg", canvas_width=500)

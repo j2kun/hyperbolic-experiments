@@ -7,6 +7,13 @@ from collections import namedtuple
 EPSILON = 1e-8
 
 
+def are_close(points1, points2):
+    for p1, p2 in zip(sorted(points1), sorted(points2)):
+        if (p1 - p2).norm() > EPSILON:
+            return False
+    return True
+
+
 class Point(namedtuple('Point', ['x', 'y'])):
     """A point class which doubles as a vector class."""
 
@@ -29,6 +36,9 @@ class Point(namedtuple('Point', ['x', 'y'])):
     def __add__(self, other):
         x, y = other
         return Point(self.x + x, self.y + y)
+
+    def __mul__(self, scalar):
+        return Point(scalar * self.x, scalar * self.y)
 
     def __sub__(self, other):
         x, y = other
