@@ -144,7 +144,7 @@ class HyperbolicTessellation(object):
     def render(self, filename, canvas_width):
         """Output an svg file drawing the tessellation."""
         self.transformer=RenderedCoords(canvas_width)
-        self.dwg=svgwrite.Drawing(filename=filename, debug=True)
+        self.dwg=svgwrite.Drawing(filename=filename, debug=False)
 
         self.dwg.fill(color='white', opacity=0)
         boundary_circle=self.dwg.circle(

@@ -4,6 +4,7 @@ attrs==18.1.0
 more-itertools==4.3.0
 pluggy==0.7.1
 py==1.5.4
+pyparsing==2.2.0
 pytest==3.7.1
 six==1.11.0
-git+git://github.com/j2kun/svgwrite.git@e2948bb8b922e64c8d8e0c1c4c66bb1f1a34d197#egg=svgwrite
+svgwrite==1.1.12
