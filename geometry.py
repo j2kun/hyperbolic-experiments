@@ -214,12 +214,12 @@ class Circle(namedtuple('Circle', ['center', 'radius'])):
     def intersect_with_line(self, line):
         """Return a possibly empty set containing the points of intersection
         of the context circle and the given line.
-
-        Substitute line equation in circle equation, and solve resulting
-        quadratic equation.
         """
+        m = line.slope
+        x, y = line.point.x, line.point.y
+        c_x, c_y, r = self.center.x, self.center.y, self.radius
         if isinstance(line, VerticalLine):
-            discriminant = self.radius ** 2 - (line.point.x - self.center.x)**2
+            discriminant = r ** 2 - (x - c_x)**2
             if abs(discriminant) < EPSILON:
                 discriminant = 0
 
@@ -228,23 +228,16 @@ class Circle(namedtuple('Circle', ['center', 'radius'])):
 
             sqrt_disc = math.sqrt(discriminant)
             return set([
-                Point(line.point.x, self.center.y + sqrt_disc),
-                Point(line.point.x, self.center.y - sqrt_disc),
-            ])
+                Point(x, c_y + sqrt_disc),
+                Point(x, c_y - sqrt_disc),
+                ])
         else:
-            A = line.slope ** 2 + 1
-            B = 2 * (line.slope * line.point.y
-                     - line.slope * self.center.y
-                     - self.center.x
-                     - line.slope ** 2 * line.point.x)
+            A = m ** 2 + 1
+            B = 2 * (m * y - m * c_y - c_x - m ** 2 * x)
             C = (
-                self.center.x ** 2
-                + line.slope ** 2 * line.point.x ** 2
-                + (line.point.y - self.center.y) ** 2
-                - 2 * line.slope * line.point.x * line.point.y
-                + 2 * line.slope * line.point.x * self.center.y
-                - self.radius ** 2
-            )
+                    c_x ** 2 + (m * x) ** 2 + (y - c_y) ** 2
+                    - 2 * m * x * y + 2 * m * x * c_y - r ** 2
+                    )
             discriminant = B * B - 4 * A * C
             if abs(discriminant) < EPSILON:
                 discriminant = 0
@@ -256,10 +249,10 @@ class Circle(namedtuple('Circle', ['center', 'radius'])):
             x_values = set([
                 (-B + sqrt_disc) / (2 * A),
                 (-B - sqrt_disc) / (2 * A),
-            ])
+                ])
             return set(
-                Point(x, line.y_value(x)) for x in x_values
-            )
+                    Point(x, line.y_value(x)) for x in x_values
+                    )
 
 
 def distance(p1, p2):

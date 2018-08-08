@@ -37,11 +37,11 @@ def compute_fundamental_triangle(tessellation_configuration):
 
     Setting y'(B) = tan(pi / p + pi / q) and writing b_y in terms of b_x gives
 
-        tan(pi / p + pi / q) tan(pi / p) = (G_x - b_x) / b_x
+        tan(pi / p + pi / q) tan(pi / p) = (g_x - b_x) / b_x
 
     Or, letting Z = tan(pi / p + pi / q) tan(pi / p),
 
-        b_x(Z + 1) = g.
+        b_x(Z + 1) = g_x.
 
     Next, we use the fact that C and the unit circle are orthogonal to get a
     relationship between their radii (pythagorean theorem):
