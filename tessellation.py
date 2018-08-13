@@ -30,13 +30,8 @@ class PolygonSet(set):
     checks for membership and insertion.
 
     We canonicalize a polygon by sorting its vertices, flattening the resulting list,
-    and
-
-    When determining if a polygon has been visited, the order of its vertices
-    is irrelevant, so we sort them before adding them to processed.
-
-    Moreover, due to the floating point precision, the entire set of processed
-    vertices has to be checked for nearness.
+    and reducing the precision to 5 decimal places. All insertion and containment checks
+    are done against the canonicalized input.
     """
 
     PRECISION = 5
