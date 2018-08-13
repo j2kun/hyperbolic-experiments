@@ -5,7 +5,6 @@ Poincare disk by uniform, regular polygons.
 from collections import deque
 from collections import namedtuple
 from geometry import Point
-from geometry import are_close
 from geometry import bounding_box_area
 from geometry import orientation
 from hyperbolic import PoincareDiskLine
@@ -64,13 +63,13 @@ class RenderedCoords:
     """
 
     def __init__(self, canvas_width):
-        self.canvas_width=canvas_width
-        self.canvas_center=Point(canvas_width / 2, canvas_width / 2)
-        self.scaling_factor=self.canvas_width / 2
+        self.canvas_width = canvas_width
+        self.canvas_center = Point(canvas_width / 2, canvas_width / 2)
+        self.scaling_factor = self.canvas_width / 2
 
     def in_rendered_coords(self, p):
         if isinstance(p, Point):
-            scaled_and_reflected=Point(p.x, -p.y) * self.scaling_factor
+            scaled_and_reflected = Point(p.x, -p.y) * self.scaling_factor
             return self.canvas_center + scaled_and_reflected
         else:
             return p * self.scaling_factor
@@ -84,28 +83,28 @@ class HyperbolicTessellation(object):
     """
 
     def __init__(self, configuration, min_area=6e-4):
-        self.configuration=configuration
-        self.disk_model=PoincareDiskModel(Point(0, 0), radius=1)
+        self.configuration = configuration
+        self.disk_model = PoincareDiskModel(Point(0, 0), radius=1)
 
         # compute the vertices of the center polygon via reflection
-        self.center_polygon=self.compute_center_polygon()
-        self.tessellated_polygons=self.tessellate(min_area=min_area)
+        self.center_polygon = self.compute_center_polygon()
+        self.tessellated_polygons = self.tessellate(min_area=min_area)
 
     def compute_center_polygon(self):
-        center, top_vertex, x_axis_vertex=compute_fundamental_triangle(
+        center, top_vertex, x_axis_vertex = compute_fundamental_triangle(
             self.configuration)
-        p=self.configuration.numPolygonSides
+        p = self.configuration.numPolygonSides
 
         """The center polygon's first vertex is the top vertex (the one that
         makes an angle of pi / q), because the x_axis_vertex is the center of
         an edge.
         """
-        polygon=[top_vertex]
+        polygon = [top_vertex]
 
-        p1, p2=top_vertex, x_axis_vertex
+        p1, p2 = top_vertex, x_axis_vertex
         for i in range(p - 1):
-            p2=self.disk_model.line_through(center, p1).reflect(p2)
-            p1=self.disk_model.line_through(center, p2).reflect(p1)
+            p2 = self.disk_model.line_through(center, p1).reflect(p2)
+            p1 = self.disk_model.line_through(center, p2).reflect(p1)
             polygon.append(p1)
 
         return polygon
@@ -115,13 +114,13 @@ class HyperbolicTessellation(object):
         polygon. Keep reflecting polygons until the Euclidean bounding box of all
         polygons is less than the given threshold.
         """
-        queue=deque()
+        queue = deque()
         queue.append(self.center_polygon)
-        tessellated_polygons=[]
-        processed=PolygonSet()
+        tessellated_polygons = []
+        processed = PolygonSet()
 
         while queue:
-            polygon=queue.pop()
+            polygon = queue.pop()
             if bounding_box_area(polygon) < min_area:
                 processed.add_polygon(polygon)
                 continue
@@ -129,11 +128,11 @@ class HyperbolicTessellation(object):
             if processed.contains_polygon(polygon):
                 continue
 
-            edges=[(polygon[i], polygon[(i + 1) % len(polygon)])
+            edges = [(polygon[i], polygon[(i + 1) % len(polygon)])
                      for i in range(len(polygon))]
             for u, v in edges:
-                line=self.disk_model.line_through(u, v)
-                reflected_polygon=[line.reflect(p) for p in polygon]
+                line = self.disk_model.line_through(u, v)
+                reflected_polygon = [line.reflect(p) for p in polygon]
                 queue.append(reflected_polygon)
 
             tessellated_polygons.append(polygon)
@@ -143,11 +142,11 @@ class HyperbolicTessellation(object):
 
     def render(self, filename, canvas_width):
         """Output an svg file drawing the tessellation."""
-        self.transformer=RenderedCoords(canvas_width)
-        self.dwg=svgwrite.Drawing(filename=filename, debug=False)
+        self.transformer = RenderedCoords(canvas_width)
+        self.dwg = svgwrite.Drawing(filename=filename, debug=False)
 
         self.dwg.fill(color='white', opacity=0)
-        boundary_circle=self.dwg.circle(
+        boundary_circle = self.dwg.circle(
             center=self.transformer.in_rendered_coords(self.disk_model.center),
             r=self.transformer.in_rendered_coords(self.disk_model.radius),
             id='boundary_circle',
@@ -156,37 +155,36 @@ class HyperbolicTessellation(object):
         boundary_circle.fill(color='white', opacity=0)
         self.dwg.add(boundary_circle)
 
-        polygon_group=self.dwg.add(self.dwg.g(id='polygons', stroke='blue', stroke_width=1))
+        polygon_group = self.dwg.add(self.dwg.g(id='polygons', stroke='blue', stroke_width=1))
         for polygon in self.tessellated_polygons:
             self.render_polygon(polygon, polygon_group)
 
         self.dwg.save()
 
     def render_polygon(self, polygon, group):
-        arcs_group=group.add(self.dwg.g())
+        arcs_group = group.add(self.dwg.g())
 
-        edges=[(polygon[i], polygon[(i + 1) % len(polygon)])
+        edges = [(polygon[i], polygon[(i + 1) % len(polygon)])
                  for i in range(len(polygon))]
 
         for (p, q) in edges:
-            line=self.disk_model.line_through(p, q)
+            line = self.disk_model.line_through(p, q)
             if isinstance(line, PoincareDiskLine):
                 self.render_arc(arcs_group, line, p, q)
             else:
-                line=self.dwg.line(
+                line = self.dwg.line(
                     self.transformer.in_rendered_coords(p),
                     self.transformer.in_rendered_coords(q))
                 arcs_group.add(line)
 
     def render_arc(self, group, line, from_point, to_point):
-        use_positive_angle_dir=orientation(
+        use_positive_angle_dir = orientation(
             from_point, to_point, self.disk_model.center) == 'counterclockwise'
 
-        p1=self.transformer.in_rendered_coords(from_point)
-        p2=self.transformer.in_rendered_coords(to_point)
-        r=self.transformer.in_rendered_coords(line.radius)
-        circle_center=self.transformer.in_rendered_coords(line.center)
-        path=self.dwg.path('m')
+        p1 = self.transformer.in_rendered_coords(from_point)
+        p2 = self.transformer.in_rendered_coords(to_point)
+        r = self.transformer.in_rendered_coords(line.radius)
+        path = self.dwg.path('m')
 
         path.push(p1)
         path.push_arc(
@@ -206,8 +204,8 @@ if __name__ == "__main__":
             if (p - 2) * (q - 2) > 4:
                 print(p, q)
                 try:
-                    config=TessellationConfiguration(p, q)
-                    tessellation=HyperbolicTessellation(config)
+                    config = TessellationConfiguration(p, q)
+                    tessellation = HyperbolicTessellation(config)
                     tessellation.render(filename="svg/tessellation_{}_{}.svg".format(p, q), canvas_width=500)
-                except:
+                except Exception:
                     pass
