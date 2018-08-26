@@ -77,13 +77,13 @@ class HyperbolicTessellation(object):
     arcs of circles perpendicular to the boundary of the disk.
     """
 
-    def __init__(self, configuration, min_area=6e-4):
+    def __init__(self, configuration, max_polygon_count=500):
         self.configuration = configuration
         self.disk_model = PoincareDiskModel(Point(0, 0), radius=1)
 
         # compute the vertices of the center polygon via reflection
         self.center_polygon = self.compute_center_polygon()
-        self.tessellated_polygons = self.tessellate(min_area=min_area)
+        self.tessellated_polygons = self.tessellate(max_polygon_count=max_polygon_count)
 
     def compute_center_polygon(self):
         center, top_vertex, x_axis_vertex = compute_fundamental_triangle(
@@ -104,7 +104,7 @@ class HyperbolicTessellation(object):
 
         return polygon
 
-    def tessellate(self, min_area=1e-3):
+    def tessellate(self, max_polygon_count=500):
         """Return the set of polygons that make up a tessellation of the center
         polygon. Keep reflecting polygons until the Euclidean bounding box of all
         polygons is less than the given threshold.
@@ -115,11 +115,7 @@ class HyperbolicTessellation(object):
         processed = PolygonSet()
 
         while queue:
-            polygon = queue.pop()
-            if bounding_box_area(polygon) < min_area:
-                processed.add_polygon(polygon)
-                continue
-
+            polygon = queue.popleft()
             if processed.contains_polygon(polygon):
                 continue
 
@@ -132,6 +128,9 @@ class HyperbolicTessellation(object):
 
             tessellated_polygons.append(polygon)
             processed.add_polygon(polygon)
+            if len(processed) > max_polygon_count:
+                processed.add_polygon(polygon)
+                break
 
         return tessellated_polygons
 
@@ -203,4 +202,5 @@ if __name__ == "__main__":
                     tessellation = HyperbolicTessellation(config)
                     tessellation.render(filename="svg/tessellation_{}_{}.svg".format(p, q), canvas_width=500)
                 except Exception:
-                    pass
+                    print("failed")
+                    raise

@@ -51,7 +51,7 @@ class Point(namedtuple('Point', ['x', 'y'])):
         return (self - other).is_zero()
 
     def __str__(self):
-        return 'Point(x={:.2f}, y={:.2f})'.format(self.x, self.y)
+        return 'Point(x={:.4f}, y={:.4f})'.format(self.x, self.y)
 
     def __repr__(self):
         return str(self)
@@ -203,7 +203,7 @@ class Circle(namedtuple('Circle', ['center', 'radius'])):
         center, radius = (self.center, self.radius)
         square_norm = (x - center.x) ** 2 + (y - center.y) ** 2
 
-        if abs(square_norm) < EPSILON:
+        if math.sqrt(square_norm) < EPSILON:
             raise ValueError(
                 "Can't invert the center of a circle in that same circle.")
 
@@ -344,7 +344,7 @@ def circle_through_points_perpendicular_to_circle(point1, point2, circle):
     ]
 
     detminor_1_1 = det3(remove_column(M, 0))
-    if abs(detminor_1_1) < EPSILON:
+    if orientation(circle.center, point1, point2) == "collinear":
         raise ValueError("input points {} {} lie on a line with the "
                          "center of the circle {}".format(point1, point2, circle))
 
